@@ -3,6 +3,7 @@ name = "wpm"
 version = "0.1.0"
 authors = ["William Roe <git@wjlr.org.uk>"]
 edition = "2018"
+license = "MIT"
 
 [dependencies]
 gfx = "0.18"
