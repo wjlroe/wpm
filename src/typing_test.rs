@@ -1,14 +1,23 @@
+use crate::TypingResult;
 use std::time::{Duration, Instant};
+
+#[derive(Copy, Clone, Debug)]
+pub enum EnteredWord {
+    Correct,
+    Incorrect,
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct TypingTest {
     pub words: Vec<String>,
-    pub entered_text: String,
+    next_word: usize,
+    pub words_entered: Vec<EnteredWord>,
+    entered_text: String,
     pub backspaces: i32,
-    start_time: Option<Instant>,
-    end_time: Option<Instant>,
+    pub start_time: Option<Instant>,
+    pub end_time: Option<Instant>,
     pub duration: Option<Duration>,
-    ended: bool,
+    pub ended: bool,
 }
 
 impl TypingTest {
@@ -64,6 +73,33 @@ impl TypingTest {
         if !self.ended && self.start_time.is_none() {
             self.start();
         }
+
+        if !self.ended {
+            self.update_words();
+        }
+    }
+
+    fn update_words(&mut self) {
+        if self.entered_text.ends_with(' ') || Some(true) == self.is_done() {
+            // just entered a space
+            let entered_word = self.entered_text.trim();
+            if !entered_word.is_empty() {
+                let assessment = if Some(entered_word)
+                    == self
+                        .words
+                        .get(self.next_word)
+                        .map(|word| dbg!(word.as_str()))
+                {
+                    EnteredWord::Correct
+                } else {
+                    EnteredWord::Incorrect
+                };
+                println!("word: {} is {:?}", entered_word, assessment);
+                self.words_entered.push(assessment);
+                self.entered_text.clear();
+                self.next_word += 1;
+            }
+        }
     }
 
     pub fn start(&mut self) {
@@ -71,7 +107,26 @@ impl TypingTest {
     }
 
     pub fn end(&mut self) {
+        self.update();
         self.end_time = Some(Instant::now());
         self.ended = true;
+    }
+
+    pub fn result(&self) -> TypingResult {
+        let mut correct_words = 0;
+        let mut incorrect_words = 0;
+        for word in &self.words_entered {
+            match word {
+                EnteredWord::Correct => correct_words += 1,
+                EnteredWord::Incorrect => incorrect_words += 1,
+            };
+        }
+        let result = TypingResult::new(
+            correct_words,
+            incorrect_words,
+            self.backspaces,
+            self.duration.unwrap(),
+        );
+        result
     }
 }

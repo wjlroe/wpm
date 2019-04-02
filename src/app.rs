@@ -1,5 +1,5 @@
-use crate::typing_result::{calc_wpm, TypingResult};
-use crate::typing_test::TypingTest;
+use crate::{TypingResult, TypingTest};
+use cgmath::*;
 use gfx::traits::FactoryExt;
 use gfx::{self, *};
 use gfx_glyph::*;
@@ -55,6 +55,9 @@ pub struct App<'a> {
     monitor: MonitorId,
     dpi: f64,
     timer_font_size: f64,
+    typing_font_size: f64,
+    iosevka_font_id: FontId,
+    roboto_font_id: FontId,
     gfx_window: WindowedContext,
     device: gfx_device_gl::Device,
     factory: gfx_device_gl::Factory,
@@ -77,6 +80,7 @@ impl<'a> App<'a> {
         let dpi = monitor.get_hidpi_factor();
         let physical_size = logical_size.to_physical(dpi.into());
         let timer_font_size = 48.0;
+        let typing_font_size = 32.0;
 
         let window_builder = WindowBuilder::new()
             .with_title("wpm")
@@ -109,12 +113,14 @@ impl<'a> App<'a> {
             out_depth: main_depth.clone(),
         };
 
-        let fonts: Vec<&[u8]> = vec![include_bytes!("iosevka-regular.ttf")];
-
-        let glyph_brush = GlyphBrushBuilder::using_fonts_bytes(fonts)
-            .initial_cache_size((512, 512))
-            .depth_test(gfx::preset::depth::LESS_EQUAL_WRITE)
-            .build(factory.clone());
+        let mut glyph_brush =
+            GlyphBrushBuilder::using_font_bytes(include_bytes!("iosevka-regular.ttf") as &[u8])
+                .initial_cache_size((512, 512))
+                .depth_test(gfx::preset::depth::LESS_EQUAL_WRITE)
+                .build(factory.clone());
+        let iosevka_font_id = FontId::default();
+        let roboto_font_id =
+            glyph_brush.add_font_bytes(include_bytes!("Roboto-Regular.ttf") as &[u8]);
 
         let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
 
@@ -126,6 +132,9 @@ impl<'a> App<'a> {
             monitor,
             dpi,
             timer_font_size,
+            typing_font_size,
+            iosevka_font_id,
+            roboto_font_id,
             gfx_window,
             device,
             factory,
@@ -230,35 +239,41 @@ impl<'a> App<'a> {
                 println!("Typing test is done!");
                 typing_test.end();
 
-                let typed_words = typing_test.entered_text.split(' ').collect::<Vec<_>>();
-                let result = calc_wpm(
-                    &typing_test.words,
-                    &typed_words,
-                    typing_test.duration.unwrap(),
-                    typing_test.backspaces,
-                );
+                let result = typing_test.result();
                 println!("Result: {:?}", result);
             }
         }
+    }
+
+    fn window_dim(&self) -> Vector2<f32> {
+        vec2(
+            self.physical_size.width as f32,
+            self.physical_size.height as f32,
+        )
     }
 
     fn render(&mut self) -> Result<(), Box<dyn Error>> {
         self.encoder.clear(&self.main_color, BG_COLOR);
         self.encoder.clear_depth(&self.main_depth, 1.0);
 
-        if let Some(time_remaining) = self
-            .typing_test
-            .as_ref()
-            .and_then(|typing_test| typing_test.remining_time_string())
-        {
-            let time_section = Section {
-                text: &time_remaining,
-                scale: Scale::uniform((self.timer_font_size * self.dpi) as f32),
-                ..Section::default()
-            };
-            self.glyph_brush.queue(time_section);
-            self.glyph_brush
-                .draw_queued(&mut self.encoder, &self.main_color, &self.main_depth)?;
+        if let Some(typing_test) = self.typing_test.as_ref() {
+            // Render text to type...
+
+            // Render clock countdown timer
+            if let Some(time_remaining) = typing_test.remining_time_string() {
+                let time_section = Section {
+                    text: &time_remaining,
+                    font_id: self.iosevka_font_id,
+                    scale: Scale::uniform((self.timer_font_size * self.dpi) as f32),
+                    ..Section::default()
+                };
+                self.glyph_brush.queue(time_section);
+                self.glyph_brush.draw_queued(
+                    &mut self.encoder,
+                    &self.main_color,
+                    &self.main_depth,
+                )?;
+            }
         }
 
         #[cfg(nope)]
