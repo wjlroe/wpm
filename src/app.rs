@@ -163,6 +163,7 @@ impl<'a> App<'a> {
             typing_result: None,
         };
         app.update_font_metrics();
+        app.start_test();
         app
     }
 
