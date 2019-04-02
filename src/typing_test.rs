@@ -85,16 +85,12 @@ impl TypingTest {
             let entered_word = self.entered_text.trim();
             if !entered_word.is_empty() {
                 let assessment = if Some(entered_word)
-                    == self
-                        .words
-                        .get(self.next_word)
-                        .map(|word| dbg!(word.as_str()))
+                    == self.words.get(self.next_word).map(|word| word.as_str())
                 {
                     EnteredWord::Correct
                 } else {
                     EnteredWord::Incorrect
                 };
-                println!("word: {} is {:?}", entered_word, assessment);
                 self.words_entered.push(assessment);
                 self.entered_text.clear();
                 self.next_word += 1;
