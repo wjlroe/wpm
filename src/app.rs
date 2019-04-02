@@ -292,8 +292,8 @@ impl<'a> App<'a> {
                 println!("Typing test is done!");
                 typing_test.end();
 
-                let result = typing_test.result();
-                println!("Result: {:?}", result);
+                self.typing_result = Some(typing_test.result());
+                println!("Result: {:?}", self.typing_result);
             }
         }
     }
