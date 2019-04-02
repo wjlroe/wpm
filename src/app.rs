@@ -58,6 +58,7 @@ pub struct App<'a> {
     event_loop: EventsLoop,
     logical_size: LogicalSize,
     physical_size: PhysicalSize,
+    window_dim: (u16, u16),
     monitor: MonitorId,
     dpi: f64,
     timer_font_size: f64,
@@ -105,6 +106,8 @@ impl<'a> App<'a> {
             )
             .expect("init gfx_window_glutin should work!");
 
+        let (width, height, ..) = main_color.get_dimensions();
+
         let quad_pso = factory
             .create_pipeline_simple(
                 include_bytes!("shaders/quad_150_core.vert"),
@@ -137,6 +140,7 @@ impl<'a> App<'a> {
             event_loop,
             logical_size,
             physical_size,
+            window_dim: (width, height),
             monitor,
             dpi,
             timer_font_size,
@@ -212,6 +216,10 @@ impl<'a> App<'a> {
             &mut self.main_color,
             &mut self.main_depth,
         );
+        let (width, height, ..) = self.main_color.get_dimensions();
+        self.window_dim = (width, height);
+        self.quad_data.out_color = self.main_color.clone();
+        self.quad_data.out_depth = self.main_depth.clone();
         self.update_font_metrics();
     }
 
@@ -288,17 +296,10 @@ impl<'a> App<'a> {
         }
     }
 
-    fn window_dim(&self) -> Vector2<f32> {
-        vec2(
-            self.physical_size.width as f32,
-            self.physical_size.height as f32,
-        )
-    }
-
     fn draw_quad(&mut self, color: [f32; 4], bounds: Vector2<f32>) {
         let transform = Matrix4::from_nonuniform_scale(
-            bounds.x / self.physical_size.width as f32,
-            bounds.y / self.physical_size.height as f32,
+            bounds.x / self.window_dim.0 as f32,
+            bounds.y / self.window_dim.1 as f32,
             1.0,
         );
         let locals = Locals {
@@ -320,8 +321,8 @@ impl<'a> App<'a> {
             3.0 * self.typing_character_dim.y,
         );
         let typing_position = vec2(
-            self.logical_size.width as f32 - typing_bounds.x / 2.0,
-            self.logical_size.height as f32 - typing_bounds.y / 2.0,
+            (self.window_dim.0 as f32 - typing_bounds.x) / 2.0,
+            (self.window_dim.1 as f32 - typing_bounds.y) / 2.0,
         );
         self.draw_quad(TYPING_BG, typing_bounds);
 
