@@ -1,0 +1,21 @@
+[package]
+name = "wpm"
+version = "0.1.0"
+authors = ["William Roe <git@wjlr.org.uk>"]
+edition = "2018"
+
+[dependencies]
+gfx_glyph = "0.14"
+gfx = "0.18"
+gfx_window_glutin = "0.30"
+glutin = { version = "0.20.0", features = ["serde", "icon_loading"] }
+cgmath = "0.17.0"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3.5", features = [
+  "winbase",
+  "consoleapi",
+  "shellapi",
+  "processenv",
+  "synchapi"
+] }
