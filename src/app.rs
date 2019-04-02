@@ -1,4 +1,4 @@
-use crate::{TypingResult, TypingTest};
+use crate::{EnteredWord, TypingResult, TypingTest};
 use cgmath::*;
 use gfx::traits::FactoryExt;
 use gfx::{self, *};
@@ -10,6 +10,12 @@ use std::error::Error;
 use std::time::Duration;
 
 const BG_COLOR: [f32; 4] = [0.22, 0.55, 0.3, 1.0];
+
+const CORRECT_WORD_COLOR: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+const INCORRECT_WORD_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+const PENDING_WORD_COLOR: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
+
+const TYPING_BG: [f32; 4] = [0.0, 0.0, 0.6, 1.0];
 
 const NO_MODS: ModifiersState = ModifiersState {
     ctrl: false,
@@ -36,7 +42,7 @@ gfx_defines! {
 
   constant Locals {
     transform: [[f32; 4]; 4] = "u_Transform",
-    color: [f32; 3] = "u_Color",
+    color: [f32; 4] = "u_Color",
   }
 
   pipeline pipe {
@@ -55,7 +61,9 @@ pub struct App<'a> {
     monitor: MonitorId,
     dpi: f64,
     timer_font_size: f64,
+    timer_character_dim: Vector2<f32>,
     typing_font_size: f64,
+    typing_character_dim: Vector2<f32>,
     iosevka_font_id: FontId,
     roboto_font_id: FontId,
     gfx_window: WindowedContext,
@@ -124,7 +132,7 @@ impl<'a> App<'a> {
 
         let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
 
-        App {
+        let mut app = App {
             running: true,
             event_loop,
             logical_size,
@@ -132,7 +140,9 @@ impl<'a> App<'a> {
             monitor,
             dpi,
             timer_font_size,
+            timer_character_dim: vec2(0.0, 0.0),
             typing_font_size,
+            typing_character_dim: vec2(0.0, 0.0),
             iosevka_font_id,
             roboto_font_id,
             gfx_window,
@@ -147,7 +157,9 @@ impl<'a> App<'a> {
             encoder,
             typing_test: None,
             typing_result: None,
-        }
+        };
+        app.update_font_metrics();
+        app
     }
 
     fn start_test(&mut self) {
@@ -162,6 +174,36 @@ impl<'a> App<'a> {
         self.typing_test = Some(typing_test);
     }
 
+    fn update_font_metrics(&mut self) {
+        let timer_section = Section {
+            font_id: self.iosevka_font_id,
+            scale: Scale::uniform((self.timer_font_size * self.dpi) as f32),
+            text: "0",
+            ..Section::default()
+        };
+        if let Some(dim) = self.glyph_brush.pixel_bounds(timer_section).map(|bounds| {
+            let width = bounds.max.x - bounds.min.x;
+            let height = bounds.max.y - bounds.min.y;
+            vec2(width as f32, height as f32)
+        }) {
+            self.timer_character_dim = dim;
+        }
+
+        let typed_section = Section {
+            font_id: self.roboto_font_id,
+            scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+            text: "A",
+            ..Section::default()
+        };
+        if let Some(dim) = self.glyph_brush.pixel_bounds(typed_section).map(|bounds| {
+            let width = bounds.max.x - bounds.min.x;
+            let height = bounds.max.y - bounds.min.y;
+            vec2(width as f32, height as f32)
+        }) {
+            self.typing_character_dim = dim;
+        }
+    }
+
     fn window_resized(&mut self) {
         self.physical_size = self.logical_size.to_physical(self.dpi.into());
         self.gfx_window.resize(self.physical_size);
@@ -170,6 +212,7 @@ impl<'a> App<'a> {
             &mut self.main_color,
             &mut self.main_depth,
         );
+        self.update_font_metrics();
     }
 
     fn type_char(&mut self, typed_char: char) {
@@ -252,12 +295,67 @@ impl<'a> App<'a> {
         )
     }
 
+    fn draw_quad(&mut self, color: [f32; 4], bounds: Vector2<f32>) {
+        let transform = Matrix4::from_nonuniform_scale(
+            bounds.x / self.physical_size.width as f32,
+            bounds.y / self.physical_size.height as f32,
+            1.0,
+        );
+        let locals = Locals {
+            color,
+            transform: transform.into(),
+        };
+        self.encoder
+            .update_constant_buffer(&self.quad_data.locals, &locals);
+        self.encoder
+            .draw(&self.quad_slice, &self.quad_pso, &self.quad_data);
+    }
+
     fn render(&mut self) -> Result<(), Box<dyn Error>> {
         self.encoder.clear(&self.main_color, BG_COLOR);
         self.encoder.clear_depth(&self.main_depth, 1.0);
 
+        let typing_bounds = vec2(
+            30.0 * self.typing_character_dim.x,
+            3.0 * self.typing_character_dim.y,
+        );
+        let typing_position = vec2(
+            self.logical_size.width as f32 - typing_bounds.x / 2.0,
+            self.logical_size.height as f32 - typing_bounds.y / 2.0,
+        );
+        self.draw_quad(TYPING_BG, typing_bounds);
+
         if let Some(typing_test) = self.typing_test.as_ref() {
             // Render text to type...
+            let mut sections = vec![];
+            for (word_idx, word) in typing_test.words.iter().enumerate() {
+                let correct_or_not = typing_test.words_entered.get(word_idx);
+                let color = match correct_or_not {
+                    Some(EnteredWord::Correct) => CORRECT_WORD_COLOR,
+                    Some(EnteredWord::Incorrect) => INCORRECT_WORD_COLOR,
+                    _ => PENDING_WORD_COLOR,
+                };
+                sections.push(SectionText {
+                    text: &word,
+                    color: color,
+                    font_id: self.roboto_font_id,
+                    scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+                    ..SectionText::default()
+                });
+                sections.push(SectionText {
+                    text: " ",
+                    font_id: self.roboto_font_id,
+                    scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+                    ..SectionText::default()
+                });
+            }
+            let typed_section = VariedSection {
+                text: sections,
+                bounds: typing_bounds.into(),
+                screen_position: typing_position.into(),
+                ..VariedSection::default()
+            };
+            self.glyph_brush.queue(typed_section);
 
             // Render clock countdown timer
             if let Some(time_remaining) = typing_test.remining_time_string() {
@@ -268,12 +366,10 @@ impl<'a> App<'a> {
                     ..Section::default()
                 };
                 self.glyph_brush.queue(time_section);
-                self.glyph_brush.draw_queued(
-                    &mut self.encoder,
-                    &self.main_color,
-                    &self.main_depth,
-                )?;
             }
+
+            self.glyph_brush
+                .draw_queued(&mut self.encoder, &self.main_color, &self.main_depth)?;
         }
 
         #[cfg(nope)]
