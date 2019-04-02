@@ -61,11 +61,9 @@ impl TypingTest {
     }
 
     pub fn backspace(&mut self) {
-        if !self.ended {
-            if let Some(_) = self.entered_text.pop() {
-                self.backspaces += 1;
-                self.update();
-            }
+        if !self.ended && self.entered_text.pop().is_some() {
+            self.backspaces += 1;
+            self.update();
         }
     }
 
@@ -117,12 +115,11 @@ impl TypingTest {
                 EnteredWord::Incorrect => incorrect_words += 1,
             };
         }
-        let result = TypingResult::new(
+        TypingResult::new(
             correct_words,
             incorrect_words,
             self.backspaces,
             self.duration.unwrap(),
-        );
-        result
+        )
     }
 }

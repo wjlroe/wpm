@@ -81,13 +81,19 @@ pub struct App<'a> {
     typing_result: Option<TypingResult>,
 }
 
+impl<'a> Default for App<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> App<'a> {
     pub fn new() -> Self {
         let event_loop = EventsLoop::new();
         let logical_size = LogicalSize::new(1024.0, 768.0);
         let monitor = event_loop.get_primary_monitor();
         let dpi = monitor.get_hidpi_factor();
-        let physical_size = logical_size.to_physical(dpi.into());
+        let physical_size = logical_size.to_physical(dpi);
         let timer_font_size = 48.0;
         let typing_font_size = 32.0;
 
@@ -211,7 +217,7 @@ impl<'a> App<'a> {
     }
 
     fn window_resized(&mut self) {
-        self.physical_size = self.logical_size.to_physical(self.dpi.into());
+        self.physical_size = self.logical_size.to_physical(self.dpi);
         self.gfx_window.resize(self.physical_size);
         gfx_window_glutin::update_views(
             &self.gfx_window,
@@ -261,7 +267,7 @@ impl<'a> App<'a> {
                     } => match keyboard_input {
                         KeyboardInput {
                             virtual_keycode: Some(VirtualKeyCode::Back),
-                            state: ElementState::Pressed,
+                            state: ElementState::Released,
                             modifiers,
                             ..
                         } => {
@@ -300,8 +306,8 @@ impl<'a> App<'a> {
 
     fn draw_quad(&mut self, color: [f32; 4], bounds: Vector2<f32>) {
         let transform = Matrix4::from_nonuniform_scale(
-            bounds.x / self.window_dim.0 as f32,
-            bounds.y / self.window_dim.1 as f32,
+            bounds.x / f32::from(self.window_dim.0),
+            bounds.y / f32::from(self.window_dim.1),
             1.0,
         );
         let locals = Locals {
@@ -323,8 +329,8 @@ impl<'a> App<'a> {
             3.0 * self.typing_character_dim.y,
         );
         let typing_position = vec2(
-            (self.window_dim.0 as f32 - typing_bounds.x) / 2.0,
-            (self.window_dim.1 as f32 - typing_bounds.y) / 2.0,
+            (f32::from(self.window_dim.0) - typing_bounds.x) / 2.0,
+            (f32::from(self.window_dim.1) - typing_bounds.y) / 2.0,
         );
         self.draw_quad(TYPING_BG, typing_bounds);
 
@@ -340,10 +346,9 @@ impl<'a> App<'a> {
                 };
                 sections.push(SectionText {
                     text: &word,
-                    color: color,
+                    color,
                     font_id: self.roboto_font_id,
                     scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
-                    ..SectionText::default()
                 });
                 sections.push(SectionText {
                     text: " ",
