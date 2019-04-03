@@ -203,18 +203,36 @@ impl<'a> App<'a> {
             self.timer_character_dim = dim;
         }
 
-        let typed_section = Section {
-            font_id: self.roboto_font_id,
-            scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
-            text: "A",
-            ..Section::default()
-        };
-        if let Some(dim) = self.glyph_brush.pixel_bounds(typed_section).map(|bounds| {
-            let width = bounds.max.x - bounds.min.x;
-            let height = bounds.max.y - bounds.min.y;
-            vec2(width as f32, height as f32)
-        }) {
-            self.typing_character_dim = dim;
+        {
+            let typed_section = Section {
+                font_id: self.roboto_font_id,
+                scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+                text: "A",
+                ..Section::default()
+            };
+            if let Some(dim) = self.glyph_brush.pixel_bounds(typed_section).map(|bounds| {
+                let width = bounds.max.x - bounds.min.x;
+                let height = bounds.max.y - bounds.min.y;
+                vec2(width as f32, height as f32)
+            }) {
+                self.typing_character_dim = dim;
+            }
+        }
+
+        {
+            let typed_section = Section {
+                font_id: self.roboto_font_id,
+                scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+                text: "A\nA",
+                ..Section::default()
+            };
+            if let Some(dim) = self.glyph_brush.pixel_bounds(typed_section).map(|bounds| {
+                let width = bounds.max.x - bounds.min.x;
+                let height = bounds.max.y - bounds.min.y;
+                vec2(width as f32, height as f32)
+            }) {
+                self.typing_character_dim.y = dim.y / 2.0;
+            }
         }
     }
 
@@ -340,12 +358,12 @@ impl<'a> App<'a> {
 
         let typing_bounds = vec2(
             30.0 * self.typing_character_dim.x,
-            2.0 * self.typing_character_dim.y * self.dpi as f32,
+            2.5 * self.typing_character_dim.y,
         );
 
         let input_bounds = vec2(
             30.0 * self.typing_character_dim.x,
-            1.0 * self.typing_character_dim.y * self.dpi as f32,
+            1.5 * self.typing_character_dim.y,
         );
 
         let mut vertical_layout = Layout::vertical(self.window_dim());
