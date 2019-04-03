@@ -12,7 +12,7 @@ pub struct TypingTest {
     pub words: Vec<String>,
     next_word: usize,
     pub words_entered: Vec<EnteredWord>,
-    entered_text: String,
+    pub entered_text: String,
     pub backspaces: i32,
     pub start_time: Option<Instant>,
     pub end_time: Option<Instant>,

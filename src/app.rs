@@ -1,3 +1,4 @@
+use crate::layout::Layout;
 use crate::{EnteredWord, TypingResult, TypingTest};
 use cgmath::*;
 use gfx::traits::FactoryExt;
@@ -16,6 +17,7 @@ const INCORRECT_WORD_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 const PENDING_WORD_COLOR: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
 
 const TYPING_BG: [f32; 4] = [0.0, 0.0, 0.6, 1.0];
+const INPUT_BG: [f32; 4] = [0.1, 0.7, 0.3, 1.0];
 
 const NO_MODS: ModifiersState = ModifiersState {
     ctrl: false,
@@ -304,12 +306,24 @@ impl<'a> App<'a> {
         }
     }
 
-    fn draw_quad(&mut self, color: [f32; 4], bounds: Vector2<f32>) {
-        let transform = Matrix4::from_nonuniform_scale(
+    fn window_dim(&self) -> Vector2<f32> {
+        (f32::from(self.window_dim.0), f32::from(self.window_dim.1)).into()
+    }
+
+    fn draw_quad(&mut self, color: [f32; 4], bounds: Vector2<f32>, position: Vector2<f32>) {
+        let scale = Matrix4::from_nonuniform_scale(
             bounds.x / f32::from(self.window_dim.0),
             bounds.y / f32::from(self.window_dim.1),
             1.0,
         );
+
+        let x_move = (position.x / f32::from(self.window_dim.0)) * 2.0 - 1.0;
+        let y_move = -((position.y / f32::from(self.window_dim.1)) * 2.0 - 1.0);
+        let translation = Matrix4::from_translation(vec3(x_move, y_move, 0.0));
+
+        // let transform = translation * scale;
+        let transform = scale * translation;
+
         let locals = Locals {
             color,
             transform: transform.into(),
@@ -326,13 +340,40 @@ impl<'a> App<'a> {
 
         let typing_bounds = vec2(
             30.0 * self.typing_character_dim.x,
-            3.0 * self.typing_character_dim.y,
+            2.0 * self.typing_character_dim.y * self.dpi as f32,
         );
-        let typing_position = vec2(
-            (f32::from(self.window_dim.0) - typing_bounds.x) / 2.0,
-            (f32::from(self.window_dim.1) - typing_bounds.y) / 2.0,
+
+        let input_bounds = vec2(
+            30.0 * self.typing_character_dim.x,
+            1.0 * self.typing_character_dim.y * self.dpi as f32,
         );
-        self.draw_quad(TYPING_BG, typing_bounds);
+
+        let mut vertical_layout = Layout::vertical(self.window_dim());
+        let typing_elem = vertical_layout.add_bounds(typing_bounds);
+        let input_elem = vertical_layout.add_bounds(input_bounds);
+        vertical_layout.calc_positions();
+        let mut typing_position = vertical_layout.element_position(typing_elem);
+        let mut input_position = vertical_layout.element_position(input_elem);
+
+        Layout::center_horizontally(self.window_dim(), typing_bounds, &mut typing_position);
+        Layout::center_horizontally(self.window_dim(), input_bounds, &mut input_position);
+
+        let window_center_x = self.window_dim().x / 2.0;
+        let typing_pos_center_x = typing_bounds.x / 2.0 + typing_position.x;
+        assert_eq!(
+            window_center_x, typing_pos_center_x,
+            "center of window.x: {}, center of typing_bounds.x: {}",
+            window_center_x, typing_pos_center_x
+        );
+        let input_pos_center_x = input_bounds.x / 2.0 + input_position.x;
+        assert_eq!(
+            window_center_x, input_pos_center_x,
+            "center of window.x: {}, center of input_bounds.x: {}",
+            window_center_x, input_pos_center_x
+        );
+
+        self.draw_quad(TYPING_BG, typing_bounds, typing_position);
+        self.draw_quad(INPUT_BG, input_bounds, input_position);
 
         if let Some(typing_test) = self.typing_test.as_ref() {
             // Render text to type...
@@ -364,6 +405,16 @@ impl<'a> App<'a> {
                 ..VariedSection::default()
             };
             self.glyph_brush.queue(typed_section);
+            let input_section = Section {
+                text: &typing_test.entered_text,
+                color: PENDING_WORD_COLOR,
+                font_id: self.roboto_font_id,
+                scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+                bounds: input_bounds.into(),
+                screen_position: input_position.into(),
+                ..Section::default()
+            };
+            self.glyph_brush.queue(input_section);
 
             // Render clock countdown timer
             if let Some(time_remaining) = typing_test.remining_time_string() {

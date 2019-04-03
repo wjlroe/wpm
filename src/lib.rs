@@ -1,4 +1,5 @@
 pub mod app;
+mod layout;
 mod typing_result;
 mod typing_test;
 
