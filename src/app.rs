@@ -329,18 +329,8 @@ impl<'a> App<'a> {
     }
 
     fn draw_quad(&mut self, color: [f32; 4], bounds: Vector2<f32>, position: Vector2<f32>) {
-        let scale = Matrix4::from_nonuniform_scale(
-            bounds.x / f32::from(self.window_dim.0),
-            bounds.y / f32::from(self.window_dim.1),
-            1.0,
-        );
-
-        let x_move = (position.x / f32::from(self.window_dim.0)) * 2.0 - 1.0;
-        let y_move = -((position.y / f32::from(self.window_dim.1)) * 2.0 - 1.0);
-        let translation = Matrix4::from_translation(vec3(x_move, y_move, 0.0));
-
-        // let transform = translation * scale;
-        let transform = scale * translation;
+        let window_dim = self.window_dim();
+        let transform = bounds_and_position_as_matrix(window_dim, bounds, position);
 
         let locals = Locals {
             color,
@@ -375,20 +365,6 @@ impl<'a> App<'a> {
 
         Layout::center_horizontally(self.window_dim(), typing_bounds, &mut typing_position);
         Layout::center_horizontally(self.window_dim(), input_bounds, &mut input_position);
-
-        let window_center_x = self.window_dim().x / 2.0;
-        let typing_pos_center_x = typing_bounds.x / 2.0 + typing_position.x;
-        assert_eq!(
-            window_center_x, typing_pos_center_x,
-            "center of window.x: {}, center of typing_bounds.x: {}",
-            window_center_x, typing_pos_center_x
-        );
-        let input_pos_center_x = input_bounds.x / 2.0 + input_position.x;
-        assert_eq!(
-            window_center_x, input_pos_center_x,
-            "center of window.x: {}, center of input_bounds.x: {}",
-            window_center_x, input_pos_center_x
-        );
 
         self.draw_quad(TYPING_BG, typing_bounds, typing_position);
         self.draw_quad(INPUT_BG, input_bounds, input_position);
@@ -449,19 +425,6 @@ impl<'a> App<'a> {
                 .draw_queued(&mut self.encoder, &self.main_color, &self.main_depth)?;
         }
 
-        #[cfg(nope)]
-        {
-            // draw some sort of quad thingy
-            let locals = Locals {
-                color,
-                transform: transform.into(),
-            };
-            self.encoder
-                .update_constant_buffer(&self.data.locals, &locals);
-            self.encoder
-                .draw(&self.quad_slice, &self.quad_pso, &self.data);
-        }
-
         // end of frame stuff now
         self.encoder.flush(&mut self.device);
         self.gfx_window.swap_buffers()?;
@@ -478,5 +441,86 @@ impl<'a> App<'a> {
         }
 
         Ok(())
+    }
+}
+
+fn bounds_and_position_as_matrix(
+    window_dim: Vector2<f32>,
+    bounds: Vector2<f32>,
+    position: Vector2<f32>,
+) -> Matrix4<f32> {
+    let scale =
+        Matrix4::from_nonuniform_scale(bounds.x / window_dim.x, bounds.y / window_dim.y, 1.0);
+
+    let x_move = 2.0 * (position.x + bounds.x / 2.0 - window_dim.x / 2.0) / window_dim.x;
+    let y_move = -2.0 * (position.y + bounds.y / 2.0 - window_dim.y / 2.0) / window_dim.y;
+    let translation = Matrix4::from_translation(vec3(x_move, y_move, 0.0));
+
+    let transform = translation * scale; // scale then translate
+
+    transform
+}
+
+#[test]
+fn test_bounds_and_position_as_matrix() {
+    fn vec4_from_2(vec: Vector2<f32>) -> Vector4<f32> {
+        vec4(vec.x, vec.y, 1.0, 1.0)
+    }
+
+    {
+        // quad half the size of the screen, positioned at the top-left of the screen
+        let transform =
+            bounds_and_position_as_matrix(vec2(200.0, 100.0), vec2(100.0, 50.0), vec2(0.0, 0.0));
+
+        assert_eq!(
+            vec4_from_2(vec2(-1.0, 0.0)),
+            transform * vec4_from_2(vec2(-1.0, -1.0)) // top-left coord
+        );
+        assert_eq!(
+            vec4_from_2(vec2(0.0, 0.0)),
+            transform * vec4_from_2(vec2(1.0, -1.0)) // top-right coord
+        );
+        assert_eq!(
+            vec4_from_2(vec2(0.0, 1.0)),
+            transform * vec4_from_2(vec2(1.0, 1.0)) // bottom-right coord
+        );
+        assert_eq!(
+            vec4_from_2(vec2(-1.0, 1.0)),
+            transform * vec4_from_2(vec2(-1.0, 1.0)) // bottom-left coord
+        );
+    }
+
+    {
+        // quad half the size of the screen, positioned at the bottom-right of the screen
+        let transform =
+            bounds_and_position_as_matrix(vec2(200.0, 100.0), vec2(100.0, 50.0), vec2(100.0, 50.0));
+
+        assert_eq!(
+            vec4_from_2(vec2(0.0, -1.0)),
+            transform * vec4_from_2(vec2(-1.0, -1.0)) // top-left coord
+        );
+        assert_eq!(
+            vec4_from_2(vec2(1.0, -1.0)),
+            transform * vec4_from_2(vec2(1.0, -1.0)) // top-right coord
+        );
+        assert_eq!(
+            vec4_from_2(vec2(1.0, 0.0)),
+            transform * vec4_from_2(vec2(1.0, 1.0)) // bottom-right coord
+        );
+        assert_eq!(
+            vec4_from_2(vec2(0.0, 0.0)),
+            transform * vec4_from_2(vec2(-1.0, 1.0)) // bottom-left coord
+        );
+    }
+
+    {
+        let transform =
+            bounds_and_position_as_matrix(vec2(100.0, 50.0), vec2(100.0, 50.0), vec2(0.0, 0.0));
+
+        // All points on the unit quad should remain the same for a quad filling the screen
+        for vertex in &QUAD {
+            let coord = vec4_from_2(vertex.pos.into());
+            assert_eq!(coord, transform * coord);
+        }
     }
 }
