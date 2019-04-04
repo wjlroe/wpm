@@ -71,7 +71,6 @@ pub struct App<'a> {
     roboto_font_id: FontId,
     gfx_window: WindowedContext,
     device: gfx_device_gl::Device,
-    factory: gfx_device_gl::Factory,
     main_color: handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
     main_depth: handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>,
     quad_pso: pso::PipelineState<gfx_device_gl::Resources, pipe::Meta>,
@@ -159,7 +158,6 @@ impl<'a> App<'a> {
             roboto_font_id,
             gfx_window,
             device,
-            factory,
             main_color,
             main_depth,
             quad_pso,
@@ -304,6 +302,9 @@ impl<'a> App<'a> {
                     WindowEvent::HiDpiFactorChanged(new_dpi) => {
                         self.dpi = new_dpi;
                         self.window_resized();
+                    }
+                    WindowEvent::Moved(_) => {
+                        self.monitor = self.gfx_window.get_current_monitor();
                     }
                     _ => {}
                 },
