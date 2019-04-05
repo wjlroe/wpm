@@ -44,7 +44,7 @@ impl TypingTest {
         }
     }
 
-    pub fn remining_time_string(&self) -> Option<String> {
+    pub fn remaining_time_string(&self) -> Option<String> {
         self.time_left().map(|remaining| {
             let all_seconds = remaining.as_secs();
             let mins = all_seconds / 60;

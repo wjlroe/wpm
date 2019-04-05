@@ -412,7 +412,7 @@ impl<'a> App<'a> {
             self.glyph_brush.queue(input_section);
 
             // Render clock countdown timer
-            if let Some(time_remaining) = typing_test.remining_time_string() {
+            if let Some(time_remaining) = typing_test.remaining_time_string() {
                 let time_section = Section {
                     text: &time_remaining,
                     font_id: self.iosevka_font_id,
