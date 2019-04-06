@@ -90,7 +90,7 @@ impl TypingState {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct PositionAndBounds {
     position: Vector2<f32>,
     bounds: Vector2<f32>,
@@ -102,6 +102,15 @@ impl Default for PositionAndBounds {
             position: vec2(0.0, 0.0),
             bounds: vec2(0.0, 0.0),
         }
+    }
+}
+
+impl PositionAndBounds {
+    fn contains_point(&self, point: Vector2<f32>) -> bool {
+        point.x >= self.position.x
+            && point.x <= self.position.x + self.bounds.x
+            && point.y >= self.position.y
+            && point.y <= self.position.y + self.bounds.y
     }
 }
 
@@ -132,6 +141,7 @@ pub struct App<'a> {
     typing_test: Option<TypingTest>,
     typing_result: Option<TypingResult>,
     typing_state: TypingState,
+    mouse_position: LogicalPosition,
 }
 
 impl<'a> Default for App<'a> {
@@ -221,6 +231,7 @@ impl<'a> App<'a> {
             typing_test: None,
             typing_result: None,
             typing_state: TypingState::default(),
+            mouse_position: LogicalPosition::new(0.0, 0.0),
         };
         app.update_font_metrics();
         app.start_test();
@@ -287,7 +298,6 @@ impl<'a> App<'a> {
                 vec2(width as f32, height as f32)
             }) {
                 typing_character_dim.y = dim.y / 2.0;
-                self.typing_state.per_line_height = typing_character_dim.y;
             }
         }
 
@@ -319,93 +329,59 @@ impl<'a> App<'a> {
 
         {
             if let Some(typing_test) = self.typing_test.as_ref() {
-                // TODO: if we calculate per_line_height here, we don't need to do that in the A\nA section above
-                // let mut typed_section = self.typed_section(typing_test, 0);
-                // typed_section.bounds.1 = 1000.0;
+                // calculate by glyphs and detecting y differences...
 
-                //                let bounds = vec2(self.typing_pos_and_bounds.bounds.x, 10000.0);
-                //                let typed_section = Section {
-                //                    font_id: self.roboto_font_id,
-                //                    bounds: bounds.into(),
-                //                    scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
-                //                    text: &typing_text.words_str(),
-                //                    ..Section::default()
-                //                };
-                // TODO: calc first_word_idx_per_line
-                // let mut per_line_height = None;
-                // let mut glyph_iter = self.glyph_brush.glyphs(typed_section).enumerate();
-                // let mut current_y = 0.0;
-                // let mut current_glyph_idx = 0;
-                // if let Some((glyph_idx, glyph_position)) = glyph_iter
-                //     .next()
-                //     .map(|(idx, glyph)| (idx, glyph.position()))
-                // {
-                //     current_y = glyph_position.y;
-                //     current_glyph_idx = glyph_idx;
-                // }
-                let _dpi = self.dpi as f32;
-                let max_length = self.typing_pos_and_bounds.bounds.x.floor();
-                let mut line_length = 0.0;
-                self.typing_state.first_word_idx_per_line.clear();
+                self.typing_state = TypingState::default();
+
+                let bounds = vec2(self.typing_pos_and_bounds.bounds.x, 10000.0);
+                let typed_section = Section {
+                    font_id: self.roboto_font_id,
+                    bounds: bounds.into(),
+                    scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+                    text: &typing_test.words_str(),
+                    ..Section::default()
+                };
+                let mut glyph_iter = self.glyph_brush.glyphs(typed_section);
+                let mut current_y = 0.0;
+                if let Some(glyph_position) = glyph_iter.next().map(|glyph| glyph.position()) {
+                    current_y = glyph_position.y;
+                }
+
+                let mut glyph_y = current_y;
                 for (word_idx, word) in typing_test.words.iter().enumerate() {
-                    let bounds = vec2(self.typing_pos_and_bounds.bounds.x, 10000.0);
-                    let mut word_with_space = String::from(word.as_str());
-                    word_with_space.push(' ');
-                    let word_section = Section {
-                        font_id: self.roboto_font_id,
-                        bounds: bounds.into(),
-                        scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
-                        text: &word_with_space,
-                        ..Section::default()
-                    };
-                    let word_width =
-                        if let Some(word_bounds) = self.glyph_brush.pixel_bounds(word_section) {
-                            (word_bounds.max.x - word_bounds.min.x) as f32
+                    if word_idx > 0 {
+                        // Get the first character/glyph for the word
+                        if let Some(glyph_position) =
+                            glyph_iter.next().map(|glyph| glyph.position())
+                        {
+                            glyph_y = glyph_position.y;
                         } else {
-                            0.0
-                        };
-                    if line_length + word_width > max_length {
-                        // this word is the first on a new line...
-                        self.typing_state.first_word_idx_per_line.push(word_idx);
-                        line_length = word_width;
-                    } else {
-                        line_length += word_width;
+                            assert!(false, "we are missing a glyph for this word!");
+                        }
                     }
-
-                    // let mut glyph_y = current_y;
-                    // if word_idx > 0 {
-                    //     // Get the first character/glyph for the word
-                    //     if let Some((glyph_idx, glyph_position)) = glyph_iter
-                    //         .next()
-                    //         .map(|(idx, glyph)| (idx, glyph.position()))
-                    //     {
-                    //         glyph_y = glyph_position.y;
-                    //         current_glyph_idx = glyph_idx;
-                    //     }
-                    // }
-                    // if glyph_y != current_y {
-                    //     self.typing_state.first_word_idx_per_line.push(word_idx);
-                    //     if per_line_height.is_none() {
-                    //         per_line_height = Some(glyph_y - current_y);
-                    //     }
-                    //     current_y = glyph_y;
-                    // }
-                    // let char_count = word.chars().count();
-                    // skip past all other characters in the word, including the space afterwords
+                    if glyph_y != current_y {
+                        self.typing_state.first_word_idx_per_line.push(word_idx);
+                        if self.typing_state.per_line_height < 0.001 {
+                            // TODO: if we calculate per_line_height here, we don't need to do that in the A\nA section above
+                            self.typing_state.per_line_height = glyph_y - current_y;
+                            // FIXME: these are different! 48.0 vs. 39.0
+                            // assert_eq!(self.typing_state.per_line_height, typing_character_dim.y);
+                        }
+                        current_y = dbg!(glyph_y);
+                    }
+                    let char_count = word.chars().count();
+                    // skip past all other characters in the word
                     // this assumes 1 glyph per character
                     // FIXME: for multi-lingual unicode support, we'll need to be cleverer about glyphs/chars
-                    // for _ in 0..char_count {
-                    //     let _ = glyph_iter.next();
-                    // }
+                    for _ in 1..char_count {
+                        let _ = glyph_iter.next().expect("shouldn't run out of glyphs");
+                    }
                     self.typing_state.num_words += 1;
                 }
                 println!(
                     "first_word_idxes: {:?}",
                     self.typing_state.first_word_idx_per_line
                 );
-                // if let Some(per_line_height) = per_line_height {
-                //     self.typing_state.per_line_height = per_line_height;
-                // }
             }
         }
     }
@@ -485,6 +461,31 @@ impl<'a> App<'a> {
                     WindowEvent::Moved(_) => {
                         self.monitor = self.gfx_window.get_current_monitor();
                     }
+                    WindowEvent::CursorMoved { position, .. } => {
+                        self.mouse_position = position;
+                    }
+                    WindowEvent::MouseInput {
+                        state: ElementState::Pressed,
+                        ..
+                    } => {
+                        let real_mouse = self.mouse_position.to_physical(self.dpi);
+                        // test if that's inside the typing window...
+                        if self
+                            .typing_pos_and_bounds
+                            .contains_point(vec2(real_mouse.x as f32, real_mouse.y as f32))
+                        {
+                            println!("you clicked within the typing window!!!");
+                            println!("typing_pos_and_bounds: {:?}", self.typing_pos_and_bounds);
+                            println!("mouse click! logical: {:?}", self.mouse_position);
+                            println!("real_mouse: {:?}", real_mouse);
+                            println!(
+                                "x offset within the box: {}",
+                                real_mouse.x as f32 - self.typing_pos_and_bounds.position.x
+                            );
+                        } else {
+                            println!("you clicked outside the typing window");
+                        }
+                    }
                     _ => {}
                 },
                 _ => {}
@@ -494,12 +495,14 @@ impl<'a> App<'a> {
 
     fn update_typing_test(&mut self) {
         if let Some(typing_test) = &mut self.typing_test {
-            if let Some(true) = typing_test.is_done() {
-                println!("Typing test is done!");
-                typing_test.end();
+            if !typing_test.ended {
+                if let Some(true) = typing_test.is_done() {
+                    println!("Typing test is done!");
+                    typing_test.end();
 
-                self.typing_result = Some(typing_test.result());
-                println!("Result: {:?}", self.typing_result);
+                    self.typing_result = Some(typing_test.result());
+                    println!("Result: {:?}", self.typing_result);
+                }
             }
         }
     }
