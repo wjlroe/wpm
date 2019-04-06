@@ -1,5 +1,5 @@
 use crate::layout::Layout;
-use crate::{EnteredWord, TypingResult, TypingTest};
+use crate::*;
 use cgmath::*;
 use gfx::traits::FactoryExt;
 use gfx::{self, *};
@@ -9,15 +9,6 @@ use glutin::Api::OpenGl;
 use glutin::*;
 use std::error::Error;
 use std::time::Duration;
-
-const BG_COLOR: [f32; 4] = [0.22, 0.55, 0.3, 1.0];
-
-const CORRECT_WORD_COLOR: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-const INCORRECT_WORD_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-const PENDING_WORD_COLOR: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
-
-const TYPING_BG: [f32; 4] = [0.0, 0.0, 0.6, 1.0];
-const INPUT_BG: [f32; 4] = [0.1, 0.7, 0.3, 1.0];
 
 const NO_MODS: ModifiersState = ModifiersState {
     ctrl: false,
@@ -55,6 +46,65 @@ gfx_defines! {
   }
 }
 
+#[derive(Clone, Default)]
+struct TypingState {
+    per_line_height: f32,
+    current_line: usize,
+    current_line_y: f32,
+    // add per_line_height each time
+    current_word_idx: usize,
+    first_word_idx_per_line: Vec<usize>,
+    word_idx_at_start_of_line: usize,
+    num_words: usize,
+}
+
+impl TypingState {
+    fn next_word(&mut self) -> bool {
+        let mut is_next_line = false;
+        assert!(
+            self.num_lines() > 0,
+            "there should be more than zero lines!"
+        );
+        assert!(self.num_words > 0, "there should be more than zero words!");
+        if self.current_word_idx < self.num_words - 1 {
+            self.current_word_idx += 1;
+            assert!(
+                self.per_line_height > 0.0,
+                "per_line_height should be non-zero!"
+            );
+            if self
+                .first_word_idx_per_line
+                .contains(&self.current_word_idx)
+            {
+                self.current_line += 1;
+                self.current_line_y += self.per_line_height;
+                self.word_idx_at_start_of_line = self.current_word_idx;
+                is_next_line = true;
+            }
+        }
+        is_next_line
+    }
+
+    fn num_lines(&self) -> usize {
+        self.first_word_idx_per_line.len()
+    }
+}
+
+#[derive(Copy, Clone)]
+struct PositionAndBounds {
+    position: Vector2<f32>,
+    bounds: Vector2<f32>,
+}
+
+impl Default for PositionAndBounds {
+    fn default() -> Self {
+        Self {
+            position: vec2(0.0, 0.0),
+            bounds: vec2(0.0, 0.0),
+        }
+    }
+}
+
 pub struct App<'a> {
     running: bool,
     event_loop: EventsLoop,
@@ -64,9 +114,10 @@ pub struct App<'a> {
     monitor: MonitorId,
     dpi: f64,
     timer_font_size: f64,
-    timer_character_dim: Vector2<f32>,
+    timer_pos_and_bounds: PositionAndBounds,
     typing_font_size: f64,
-    typing_character_dim: Vector2<f32>,
+    typing_pos_and_bounds: PositionAndBounds,
+    input_pos_and_bounds: PositionAndBounds,
     iosevka_font_id: FontId,
     roboto_font_id: FontId,
     gfx_window: WindowedContext,
@@ -80,6 +131,7 @@ pub struct App<'a> {
     encoder: Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
     typing_test: Option<TypingTest>,
     typing_result: Option<TypingResult>,
+    typing_state: TypingState,
 }
 
 impl<'a> Default for App<'a> {
@@ -151,9 +203,10 @@ impl<'a> App<'a> {
             monitor,
             dpi,
             timer_font_size,
-            timer_character_dim: vec2(0.0, 0.0),
+            timer_pos_and_bounds: PositionAndBounds::default(),
             typing_font_size,
-            typing_character_dim: vec2(0.0, 0.0),
+            typing_pos_and_bounds: PositionAndBounds::default(),
+            input_pos_and_bounds: PositionAndBounds::default(),
             iosevka_font_id,
             roboto_font_id,
             gfx_window,
@@ -167,6 +220,7 @@ impl<'a> App<'a> {
             encoder,
             typing_test: None,
             typing_result: None,
+            typing_state: TypingState::default(),
         };
         app.update_font_metrics();
         app.start_test();
@@ -187,6 +241,9 @@ impl<'a> App<'a> {
     }
 
     fn update_font_metrics(&mut self) {
+        let mut timer_character_dim = vec2(0.0, 0.0);
+        let mut typing_character_dim = vec2(0.0, 0.0);
+
         let timer_section = Section {
             font_id: self.iosevka_font_id,
             scale: Scale::uniform((self.timer_font_size * self.dpi) as f32),
@@ -198,7 +255,7 @@ impl<'a> App<'a> {
             let height = bounds.max.y - bounds.min.y;
             vec2(width as f32, height as f32)
         }) {
-            self.timer_character_dim = dim;
+            timer_character_dim = dim;
         }
 
         {
@@ -213,7 +270,7 @@ impl<'a> App<'a> {
                 let height = bounds.max.y - bounds.min.y;
                 vec2(width as f32, height as f32)
             }) {
-                self.typing_character_dim = dim;
+                typing_character_dim = dim;
             }
         }
 
@@ -229,7 +286,122 @@ impl<'a> App<'a> {
                 let height = bounds.max.y - bounds.min.y;
                 vec2(width as f32, height as f32)
             }) {
-                self.typing_character_dim.y = dim.y / 2.0;
+                typing_character_dim.y = dim.y / 2.0;
+                self.typing_state.per_line_height = typing_character_dim.y;
+            }
+        }
+
+        {
+            self.typing_pos_and_bounds.bounds =
+                vec2(30.0 * typing_character_dim.x, 2.5 * typing_character_dim.y);
+
+            self.input_pos_and_bounds.bounds =
+                vec2(30.0 * typing_character_dim.x, 1.5 * typing_character_dim.y);
+
+            let mut vertical_layout = Layout::vertical(self.window_dim());
+            let typing_elem = vertical_layout.add_bounds(self.typing_pos_and_bounds.bounds);
+            let input_elem = vertical_layout.add_bounds(self.input_pos_and_bounds.bounds);
+            vertical_layout.calc_positions();
+            self.typing_pos_and_bounds.position = vertical_layout.element_position(typing_elem);
+            self.input_pos_and_bounds.position = vertical_layout.element_position(input_elem);
+
+            Layout::center_horizontally(
+                self.window_dim(),
+                self.typing_pos_and_bounds.bounds,
+                &mut self.typing_pos_and_bounds.position,
+            );
+            Layout::center_horizontally(
+                self.window_dim(),
+                self.typing_pos_and_bounds.bounds,
+                &mut self.input_pos_and_bounds.position,
+            );
+        }
+
+        {
+            if let Some(typing_test) = self.typing_test.as_ref() {
+                // TODO: if we calculate per_line_height here, we don't need to do that in the A\nA section above
+                // let mut typed_section = self.typed_section(typing_test, 0);
+                // typed_section.bounds.1 = 1000.0;
+
+                //                let bounds = vec2(self.typing_pos_and_bounds.bounds.x, 10000.0);
+                //                let typed_section = Section {
+                //                    font_id: self.roboto_font_id,
+                //                    bounds: bounds.into(),
+                //                    scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+                //                    text: &typing_text.words_str(),
+                //                    ..Section::default()
+                //                };
+                // TODO: calc first_word_idx_per_line
+                // let mut per_line_height = None;
+                // let mut glyph_iter = self.glyph_brush.glyphs(typed_section).enumerate();
+                // let mut current_y = 0.0;
+                // let mut current_glyph_idx = 0;
+                // if let Some((glyph_idx, glyph_position)) = glyph_iter
+                //     .next()
+                //     .map(|(idx, glyph)| (idx, glyph.position()))
+                // {
+                //     current_y = glyph_position.y;
+                //     current_glyph_idx = glyph_idx;
+                // }
+                let _dpi = self.dpi as f32;
+                let max_length = self.typing_pos_and_bounds.bounds.x.floor();
+                let mut line_length = 0.0;
+                for (word_idx, word) in typing_test.words.iter().enumerate() {
+                    let bounds = vec2(self.typing_pos_and_bounds.bounds.x, 10000.0);
+                    let mut word_with_space = String::from(word.as_str());
+                    word_with_space.push(' ');
+                    let word_section = Section {
+                        font_id: self.roboto_font_id,
+                        bounds: bounds.into(),
+                        scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
+                        text: &word_with_space,
+                        ..Section::default()
+                    };
+                    let word_width =
+                        if let Some(word_bounds) = self.glyph_brush.pixel_bounds(word_section) {
+                            (word_bounds.max.x - word_bounds.min.x) as f32
+                        } else {
+                            0.0
+                        };
+                    if line_length + word_width > max_length {
+                        // this word is the first on a new line...
+
+                        self.typing_state.first_word_idx_per_line.push(word_idx);
+                        line_length = word_width;
+                    } else {
+                        line_length += word_width;
+                    }
+
+                    // let mut glyph_y = current_y;
+                    // if word_idx > 0 {
+                    //     // Get the first character/glyph for the word
+                    //     if let Some((glyph_idx, glyph_position)) = glyph_iter
+                    //         .next()
+                    //         .map(|(idx, glyph)| (idx, glyph.position()))
+                    //     {
+                    //         glyph_y = glyph_position.y;
+                    //         current_glyph_idx = glyph_idx;
+                    //     }
+                    // }
+                    // if glyph_y != current_y {
+                    //     self.typing_state.first_word_idx_per_line.push(word_idx);
+                    //     if per_line_height.is_none() {
+                    //         per_line_height = Some(glyph_y - current_y);
+                    //     }
+                    //     current_y = glyph_y;
+                    // }
+                    // let char_count = word.chars().count();
+                    // skip past all other characters in the word, including the space afterwords
+                    // this assumes 1 glyph per character
+                    // FIXME: for multi-lingual unicode support, we'll need to be cleverer about glyphs/chars
+                    // for _ in 0..char_count {
+                    //     let _ = glyph_iter.next();
+                    // }
+                    self.typing_state.num_words += 1;
+                }
+                // if let Some(per_line_height) = per_line_height {
+                //     self.typing_state.per_line_height = per_line_height;
+                // }
             }
         }
     }
@@ -247,6 +419,7 @@ impl<'a> App<'a> {
         self.quad_data.out_color = self.main_color.clone();
         self.quad_data.out_depth = self.main_depth.clone();
         self.update_font_metrics();
+        let _ = self.render();
     }
 
     fn type_char(&mut self, typed_char: char) {
@@ -255,7 +428,9 @@ impl<'a> App<'a> {
         }
 
         if let Some(typing_test) = &mut self.typing_test {
-            typing_test.typed_char(typed_char);
+            if typing_test.typed_char(typed_char) {
+                self.typing_state.next_word();
+            }
         }
     }
 
@@ -343,76 +518,59 @@ impl<'a> App<'a> {
             .draw(&self.quad_slice, &self.quad_pso, &self.quad_data);
     }
 
+    fn typed_section(&self, typing_test: &'a TypingTest, skip_num: usize) -> VariedSection<'a> {
+        typing_test.words_as_varied_section(
+            skip_num,
+            self.typing_pos_and_bounds.bounds,
+            self.typing_pos_and_bounds.position,
+            (self.typing_font_size * self.dpi) as f32,
+            self.roboto_font_id,
+        )
+    }
+
     fn render(&mut self) -> Result<(), Box<dyn Error>> {
         self.encoder.clear(&self.main_color, BG_COLOR);
         self.encoder.clear_depth(&self.main_depth, 1.0);
 
-        let typing_bounds = vec2(
-            30.0 * self.typing_character_dim.x,
-            2.5 * self.typing_character_dim.y,
+        self.draw_quad(
+            TYPING_BG,
+            self.typing_pos_and_bounds.bounds,
+            self.typing_pos_and_bounds.position,
         );
-
-        let input_bounds = vec2(
-            30.0 * self.typing_character_dim.x,
-            1.5 * self.typing_character_dim.y,
+        self.draw_quad(
+            INPUT_BG,
+            self.input_pos_and_bounds.bounds,
+            self.input_pos_and_bounds.position,
         );
-
-        let mut vertical_layout = Layout::vertical(self.window_dim());
-        let typing_elem = vertical_layout.add_bounds(typing_bounds);
-        let input_elem = vertical_layout.add_bounds(input_bounds);
-        vertical_layout.calc_positions();
-        let mut typing_position = vertical_layout.element_position(typing_elem);
-        let mut input_position = vertical_layout.element_position(input_elem);
-
-        Layout::center_horizontally(self.window_dim(), typing_bounds, &mut typing_position);
-        Layout::center_horizontally(self.window_dim(), input_bounds, &mut input_position);
-
-        self.draw_quad(TYPING_BG, typing_bounds, typing_position);
-        self.draw_quad(INPUT_BG, input_bounds, input_position);
 
         if let Some(typing_test) = self.typing_test.as_ref() {
-            // Render text to type...
-            let mut sections = vec![];
-            for (word_idx, word) in typing_test.words.iter().enumerate() {
-                let correct_or_not = typing_test.words_entered.get(word_idx);
-                let color = match correct_or_not {
-                    Some(EnteredWord::Correct) => CORRECT_WORD_COLOR,
-                    Some(EnteredWord::Incorrect) => INCORRECT_WORD_COLOR,
-                    _ => PENDING_WORD_COLOR,
-                };
-                sections.push(SectionText {
-                    text: &word,
-                    color,
-                    font_id: self.roboto_font_id,
-                    scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
-                });
-                sections.push(SectionText {
-                    text: " ",
-                    font_id: self.roboto_font_id,
-                    scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
-                    ..SectionText::default()
-                });
-            }
-            let typed_section = VariedSection {
-                text: sections,
-                bounds: typing_bounds.into(),
-                screen_position: typing_position.into(),
-                ..VariedSection::default()
+            // TODO: skip the full entered lines before current word...
+            let skip_num = if self.typing_state.word_idx_at_start_of_line > 0 {
+                self.typing_state.word_idx_at_start_of_line
+            } else {
+                0
             };
-            self.glyph_brush.queue(typed_section);
+            println!(
+                "first_word_idxes: {:?}",
+                self.typing_state.first_word_idx_per_line
+            );
+            self.glyph_brush
+                .queue(self.typed_section(typing_test, skip_num));
+
             let input_section = Section {
                 text: &typing_test.entered_text,
                 color: PENDING_WORD_COLOR,
                 font_id: self.roboto_font_id,
                 scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
-                bounds: input_bounds.into(),
-                screen_position: input_position.into(),
+                bounds: self.input_pos_and_bounds.bounds.into(),
+                screen_position: self.input_pos_and_bounds.position.into(),
                 ..Section::default()
             };
             self.glyph_brush.queue(input_section);
 
             // Render clock countdown timer
             if let Some(time_remaining) = typing_test.remaining_time_string() {
+                // TODO: position and bounds should be set
                 let time_section = Section {
                     text: &time_remaining,
                     font_id: self.iosevka_font_id,
