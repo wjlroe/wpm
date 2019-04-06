@@ -346,6 +346,7 @@ impl<'a> App<'a> {
                 let _dpi = self.dpi as f32;
                 let max_length = self.typing_pos_and_bounds.bounds.x.floor();
                 let mut line_length = 0.0;
+                self.typing_state.first_word_idx_per_line.clear();
                 for (word_idx, word) in typing_test.words.iter().enumerate() {
                     let bounds = vec2(self.typing_pos_and_bounds.bounds.x, 10000.0);
                     let mut word_with_space = String::from(word.as_str());
@@ -365,7 +366,6 @@ impl<'a> App<'a> {
                         };
                     if line_length + word_width > max_length {
                         // this word is the first on a new line...
-
                         self.typing_state.first_word_idx_per_line.push(word_idx);
                         line_length = word_width;
                     } else {
@@ -399,6 +399,10 @@ impl<'a> App<'a> {
                     // }
                     self.typing_state.num_words += 1;
                 }
+                println!(
+                    "first_word_idxes: {:?}",
+                    self.typing_state.first_word_idx_per_line
+                );
                 // if let Some(per_line_height) = per_line_height {
                 //     self.typing_state.per_line_height = per_line_height;
                 // }
@@ -550,10 +554,6 @@ impl<'a> App<'a> {
             } else {
                 0
             };
-            println!(
-                "first_word_idxes: {:?}",
-                self.typing_state.first_word_idx_per_line
-            );
             self.glyph_brush
                 .queue(self.typed_section(typing_test, skip_num));
 
