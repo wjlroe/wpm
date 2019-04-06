@@ -143,7 +143,7 @@ impl<'a> Default for App<'a> {
 impl<'a> App<'a> {
     pub fn new() -> Self {
         let event_loop = EventsLoop::new();
-        let logical_size = LogicalSize::new(1024.0, 768.0);
+        let logical_size = LogicalSize::new(512.0, 384.0);
         let monitor = event_loop.get_primary_monitor();
         let dpi = monitor.get_hidpi_factor();
         let physical_size = logical_size.to_physical(dpi);
