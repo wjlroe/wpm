@@ -1,3 +1,4 @@
+mod animation;
 pub mod app;
 mod colours;
 mod layout;
@@ -5,6 +6,7 @@ mod maths;
 mod typing_result;
 mod typing_test;
 
+pub use animation::Animation;
 pub use app::App;
 pub use colours::*;
 pub use maths::*;
