@@ -8,7 +8,7 @@ use glutin::dpi::*;
 use glutin::Api::OpenGl;
 use glutin::*;
 use std::error::Error;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 const NO_MODS: ModifiersState = ModifiersState {
     ctrl: false,
@@ -49,18 +49,61 @@ gfx_defines! {
 #[derive(Clone, Default)]
 struct TypingState {
     per_line_height: f32,
-    current_line: usize,
-    current_line_y: f32,
+    current_line_offset: f32,
+    animating: bool,
     // add per_line_height each time
     current_word_idx: usize,
     first_word_idx_per_line: Vec<usize>,
     word_idx_at_start_of_line: usize,
+    word_idx_at_prev_line: usize,
     num_words: usize,
 }
 
 impl TypingState {
-    fn next_word(&mut self) -> bool {
-        let mut is_next_line = false;
+    fn update(&mut self, dt: f32) {
+        if self.animating {
+            self.current_line_offset += dt * 0.9;
+            if self.current_line_offset >= 1.0 {
+                self.animating = false;
+                self.current_line_offset = 0.0;
+            }
+        }
+    }
+
+    fn skip_num(&self) -> usize {
+        if self.animating {
+            self.word_idx_at_prev_line
+        } else {
+            if self.word_idx_at_start_of_line > 0 {
+                self.word_idx_at_start_of_line
+            } else {
+                0
+            }
+        }
+    }
+
+    fn offset(&self) -> f32 {
+        if self.animating {
+            self.current_line_offset
+        } else {
+            0.0
+        }
+    }
+
+    fn transform(&self, window_dim: Vector2<f32>) -> Matrix4<f32> {
+        Matrix4::from_translation(vec3(
+            0.0,
+            (self.offset() * self.per_line_height) / (window_dim.y / 2.0),
+            0.0,
+        ))
+    }
+
+    fn start_animation(&mut self) {
+        self.animating = true;
+        self.current_line_offset = 0.0;
+    }
+
+    fn next_word(&mut self) {
         assert!(
             self.num_lines() > 0,
             "there should be more than zero lines!"
@@ -76,13 +119,11 @@ impl TypingState {
                 .first_word_idx_per_line
                 .contains(&self.current_word_idx)
             {
-                self.current_line += 1;
-                self.current_line_y += self.per_line_height;
+                self.start_animation();
+                self.word_idx_at_prev_line = self.word_idx_at_start_of_line;
                 self.word_idx_at_start_of_line = self.current_word_idx;
-                is_next_line = true;
             }
         }
-        is_next_line
     }
 
     fn num_lines(&self) -> usize {
@@ -386,7 +427,7 @@ impl<'a> App<'a> {
         }
     }
 
-    fn window_resized(&mut self) {
+    fn window_resized(&mut self, dt: f32) {
         self.physical_size = self.logical_size.to_physical(self.dpi);
         self.gfx_window.resize(self.physical_size);
         gfx_window_glutin::update_views(
@@ -399,7 +440,7 @@ impl<'a> App<'a> {
         self.quad_data.out_color = self.main_color.clone();
         self.quad_data.out_depth = self.main_depth.clone();
         self.update_font_metrics();
-        let _ = self.render();
+        let _ = self.render(dt);
     }
 
     fn type_char(&mut self, typed_char: char) {
@@ -420,7 +461,7 @@ impl<'a> App<'a> {
         }
     }
 
-    fn process_events(&mut self) {
+    fn process_events(&mut self, dt: f32) {
         let mut events = vec![];
 
         self.event_loop.poll_events(|event| events.push(event));
@@ -452,11 +493,11 @@ impl<'a> App<'a> {
                     },
                     WindowEvent::Resized(new_logical_size) => {
                         self.logical_size = new_logical_size;
-                        self.window_resized();
+                        self.window_resized(dt);
                     }
                     WindowEvent::HiDpiFactorChanged(new_dpi) => {
                         self.dpi = new_dpi;
-                        self.window_resized();
+                        self.window_resized(dt);
                     }
                     WindowEvent::Moved(_) => {
                         self.monitor = self.gfx_window.get_current_monitor();
@@ -535,7 +576,7 @@ impl<'a> App<'a> {
         )
     }
 
-    fn render(&mut self) -> Result<(), Box<dyn Error>> {
+    fn render(&mut self, dt: f32) -> Result<(), Box<dyn Error>> {
         self.encoder.clear(&self.main_color, BG_COLOR);
         self.encoder.clear_depth(&self.main_depth, 1.0);
 
@@ -552,13 +593,16 @@ impl<'a> App<'a> {
 
         if let Some(typing_test) = self.typing_test.as_ref() {
             // TODO: skip the full entered lines before current word...
-            let skip_num = if self.typing_state.word_idx_at_start_of_line > 0 {
-                self.typing_state.word_idx_at_start_of_line
-            } else {
-                0
-            };
+            self.typing_state.update(dt);
+            let skip_num = self.typing_state.skip_num();
             self.glyph_brush
                 .queue(self.typed_section(typing_test, skip_num));
+            self.glyph_brush.draw_queued_with_transform(
+                self.typing_state.transform(self.window_dim()).into(),
+                &mut self.encoder,
+                &self.main_color,
+                &self.main_depth,
+            )?;
 
             let input_section = Section {
                 text: &typing_test.entered_text,
@@ -596,10 +640,16 @@ impl<'a> App<'a> {
     }
 
     pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
+        let mut last_frame_time = Instant::now();
+
         while self.running {
-            self.process_events();
+            let elapsed = last_frame_time.elapsed();
+            last_frame_time = Instant::now();
+            let dt = elapsed.as_secs() as f32 + elapsed.subsec_nanos() as f32 * 1e-9;
+
+            self.process_events(dt);
             self.update_typing_test();
-            self.render()?;
+            self.render(dt)?;
         }
 
         Ok(())
