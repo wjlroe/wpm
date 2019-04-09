@@ -49,9 +49,9 @@ gfx_defines! {
 #[derive(Clone, Default)]
 struct TypingState {
     per_line_height: f32,
-    current_line_offset: f32,
+    current_line_offset_t: f32,
+    current_line_offset_max_t: f32, // time in seconds to animate
     animating: bool,
-    // add per_line_height each time
     current_word_idx: usize,
     first_word_idx_per_line: Vec<usize>,
     word_idx_at_start_of_line: usize,
@@ -62,10 +62,10 @@ struct TypingState {
 impl TypingState {
     fn update(&mut self, dt: f32) {
         if self.animating {
-            self.current_line_offset += dt * 0.9;
-            if self.current_line_offset >= 1.0 {
+            self.current_line_offset_t += dt;
+            if self.current_line_offset_t >= self.current_line_offset_max_t {
                 self.animating = false;
-                self.current_line_offset = 0.0;
+                self.current_line_offset_t = 0.0;
             }
         }
     }
@@ -84,23 +84,25 @@ impl TypingState {
 
     fn offset(&self) -> f32 {
         if self.animating {
-            self.current_line_offset
+            ease_in_out(
+                self.current_line_offset_t,
+                0.0,
+                self.per_line_height,
+                self.current_line_offset_max_t,
+            )
         } else {
             0.0
         }
     }
 
     fn transform(&self, window_dim: Vector2<f32>) -> Matrix4<f32> {
-        Matrix4::from_translation(vec3(
-            0.0,
-            (self.offset() * self.per_line_height) / (window_dim.y / 2.0),
-            0.0,
-        ))
+        Matrix4::from_translation(vec3(0.0, self.offset() / (window_dim.y / 2.0), 0.0))
     }
 
     fn start_animation(&mut self) {
         self.animating = true;
-        self.current_line_offset = 0.0;
+        self.current_line_offset_t = 0.0;
+        self.current_line_offset_max_t = 1.5; // n second animation
     }
 
     fn next_word(&mut self) {
