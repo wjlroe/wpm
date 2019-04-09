@@ -561,7 +561,7 @@ impl<'a> App<'a> {
     fn typed_section(&self, typing_test: &'a TypingTest, skip_num: usize) -> VariedSection<'a> {
         typing_test.words_as_varied_section(
             skip_num,
-            self.typing_pos_and_bounds.bounds,
+            self.typing_pos_and_bounds.bounds + vec2(0.0, self.typing_state.offset()),
             self.typing_pos_and_bounds.position,
             (self.typing_font_size * self.dpi) as f32,
             self.roboto_font_id,
