@@ -1,5 +1,5 @@
+use std::time::{Duration, Instant};
 use wpm::TypingTest;
-use std::time::{Instant, Duration};
 
 #[test]
 fn test_some_words() {

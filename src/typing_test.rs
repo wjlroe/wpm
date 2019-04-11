@@ -1,4 +1,6 @@
-use crate::TypingResult;
+use crate::*;
+use cgmath::Vector2;
+use gfx_glyph::{FontId, Scale, SectionText, VariedSection};
 use std::time::{Duration, Instant};
 
 #[derive(Copy, Clone, Debug)]
@@ -53,11 +55,17 @@ impl TypingTest {
         })
     }
 
-    pub fn typed_char(&mut self, typed_char: char) {
+    pub fn typed_char(&mut self, typed_char: char) -> bool {
+        let mut word_ended = false;
         if !self.ended {
             self.entered_text.push(typed_char);
+            let num_words = self.words_entered.len();
             self.update();
+            if self.words_entered.len() > num_words {
+                word_ended = true;
+            }
         }
+        word_ended
     }
 
     pub fn backspace(&mut self) {
@@ -121,5 +129,47 @@ impl TypingTest {
             self.backspaces,
             self.duration.unwrap(),
         )
+    }
+
+    pub fn words_str(&self) -> String {
+        self.words.join(" ")
+    }
+
+    pub fn words_as_varied_section(
+        &self,
+        skip_num: usize,
+        bounds: Vector2<f32>,
+        position: Vector2<f32>,
+        font_scale: f32,
+        font_id: FontId,
+    ) -> VariedSection {
+        let mut sections = vec![];
+        for (word_idx, word) in self.words.iter().enumerate().skip(skip_num) {
+            let correct_or_not = self.words_entered.get(word_idx);
+            let color = match correct_or_not {
+                Some(EnteredWord::Correct) => CORRECT_WORD_COLOR,
+                Some(EnteredWord::Incorrect) => INCORRECT_WORD_COLOR,
+                _ => PENDING_WORD_COLOR,
+            };
+            sections.push(SectionText {
+                text: &word,
+                color,
+                font_id,
+                scale: Scale::uniform(font_scale),
+            });
+            sections.push(SectionText {
+                text: " ",
+                font_id,
+                scale: Scale::uniform(font_scale),
+                ..SectionText::default()
+            });
+        }
+        VariedSection {
+            text: sections,
+            bounds: bounds.into(),
+            screen_position: position.into(),
+            z: 1.0,
+            ..VariedSection::default()
+        }
     }
 }

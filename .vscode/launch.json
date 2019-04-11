@@ -14,7 +14,10 @@
                         "cwd": "${workspaceFolder}",
                         "environment": [],
                         "externalConsole": false,
-                        "preLaunchTask": "cargo build"
+                        "preLaunchTask": "cargo build",
+                        "linux": {
+                                "type": "cppdbg"
+                        }
                 }
         ]
 }
