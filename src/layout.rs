@@ -19,13 +19,13 @@ impl Element {
     }
 }
 
-pub struct Layout {
+pub struct ElementLayout {
     layout_type: LayoutType,
     pub elements: Vec<Element>,
     bounding_box: Vector2<f32>,
 }
 
-impl Layout {
+impl ElementLayout {
     pub fn center_horizontally(
         bounding_box: Vector2<f32>,
         element_bounds: Vector2<f32>,
