@@ -168,6 +168,7 @@ impl TypingTest {
             text: sections,
             bounds: bounds.into(),
             screen_position: position.into(),
+            z: 1.0,
             ..VariedSection::default()
         }
     }

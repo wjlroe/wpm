@@ -36,6 +36,7 @@ gfx_defines! {
   constant Locals {
     transform: [[f32; 4]; 4] = "u_Transform",
     color: [f32; 4] = "u_Color",
+    z: f32 = "u_Z",
   }
 
   pipeline pipe {
@@ -221,7 +222,7 @@ impl<'a> App<'a> {
             factory.create_vertex_buffer_with_slice(&QUAD, &QUAD_INDICES as &[u16]);
         let quad_data = pipe::Data {
             vbuf: quad_vbuf,
-            locals: factory.create_constant_buffer(2),
+            locals: factory.create_constant_buffer(3),
             out_color: main_color.clone(),
             out_depth: main_depth.clone(),
         };
@@ -544,13 +545,14 @@ impl<'a> App<'a> {
         (f32::from(self.window_dim.0), f32::from(self.window_dim.1)).into()
     }
 
-    fn draw_quad(&mut self, color: [f32; 4], bounds: Vector2<f32>, position: Vector2<f32>) {
+    fn draw_quad(&mut self, color: [f32; 4], bounds: Vector2<f32>, position: Vector2<f32>, z: f32) {
         let window_dim = self.window_dim();
         let transform = bounds_and_position_as_matrix(window_dim, bounds, position);
 
         let locals = Locals {
             color,
             transform: transform.into(),
+            z: z,
         };
         self.encoder
             .update_constant_buffer(&self.quad_data.locals, &locals);
@@ -576,11 +578,19 @@ impl<'a> App<'a> {
             TYPING_BG,
             self.typing_pos_and_bounds.bounds,
             self.typing_pos_and_bounds.position,
+            1.0,
         );
         self.draw_quad(
             INPUT_BG,
             self.input_pos_and_bounds.bounds,
             self.input_pos_and_bounds.position,
+            1.0,
+        );
+        self.draw_quad(
+            TRANSPARENT,
+            self.typing_pos_and_bounds.bounds,
+            self.typing_pos_and_bounds.position - vec2(0.0, self.typing_pos_and_bounds.bounds.y),
+            0.5,
         );
 
         if let Some(typing_test) = self.typing_test.as_ref() {
@@ -589,6 +599,7 @@ impl<'a> App<'a> {
             let skip_num = self.typing_state.skip_num();
             self.glyph_brush
                 .queue(self.typed_section(typing_test, skip_num));
+
             self.glyph_brush.draw_queued_with_transform(
                 self.typing_state.transform(self.window_dim()).into(),
                 &mut self.encoder,
