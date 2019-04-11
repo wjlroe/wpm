@@ -1,4 +1,4 @@
-use crate::layout::Layout;
+use crate::layout::ElementLayout;
 use crate::*;
 use cgmath::*;
 use gfx::traits::FactoryExt;
@@ -146,6 +146,17 @@ impl PositionAndBounds {
             && point.y >= self.position.y
             && point.y <= self.position.y + self.bounds.y
     }
+
+    fn center_point(&self) -> Vector2<f32> {
+        vec2(
+            self.position.x + self.bounds.x / 2.0,
+            self.position.y + self.bounds.y / 2.0,
+        )
+    }
+
+    fn center_y(&self) -> Vector2<f32> {
+        vec2(self.position.x, self.position.y + self.bounds.y / 2.0)
+    }
 }
 
 pub struct App<'a> {
@@ -292,7 +303,7 @@ impl<'a> App<'a> {
         let timer_section = Section {
             font_id: self.iosevka_font_id,
             scale: Scale::uniform((self.timer_font_size * self.dpi) as f32),
-            text: "0",
+            text: "00:00",
             ..Section::default()
         };
         if let Some(dim) = self.glyph_brush.pixel_bounds(timer_section).map(|bounds| {
@@ -307,7 +318,7 @@ impl<'a> App<'a> {
             let typed_section = Section {
                 font_id: self.roboto_font_id,
                 scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
-                text: "A",
+                text: "AA",
                 ..Section::default()
             };
             if let Some(dim) = self.glyph_brush.pixel_bounds(typed_section).map(|bounds| {
@@ -315,7 +326,7 @@ impl<'a> App<'a> {
                 let height = bounds.max.y - bounds.min.y;
                 vec2(width as f32, height as f32)
             }) {
-                typing_character_dim = dim;
+                typing_character_dim.x = dim.x / 2.0;
             }
         }
 
@@ -336,28 +347,37 @@ impl<'a> App<'a> {
         }
 
         {
+            let input_height = 1.5 * timer_character_dim.y;
+
             self.typing_pos_and_bounds.bounds =
                 vec2(30.0 * typing_character_dim.x, 2.5 * typing_character_dim.y);
 
-            self.input_pos_and_bounds.bounds =
-                vec2(30.0 * typing_character_dim.x, 1.5 * typing_character_dim.y);
+            self.input_pos_and_bounds.bounds = vec2(30.0 * typing_character_dim.x, input_height);
 
-            let mut vertical_layout = Layout::vertical(self.window_dim());
+            let mut vertical_layout = ElementLayout::vertical(self.window_dim());
             let typing_elem = vertical_layout.add_bounds(self.typing_pos_and_bounds.bounds);
             let input_elem = vertical_layout.add_bounds(self.input_pos_and_bounds.bounds);
             vertical_layout.calc_positions();
             self.typing_pos_and_bounds.position = vertical_layout.element_position(typing_elem);
             self.input_pos_and_bounds.position = vertical_layout.element_position(input_elem);
 
-            Layout::center_horizontally(
+            ElementLayout::center_horizontally(
                 self.window_dim(),
                 self.typing_pos_and_bounds.bounds,
                 &mut self.typing_pos_and_bounds.position,
             );
-            Layout::center_horizontally(
+            ElementLayout::center_horizontally(
                 self.window_dim(),
                 self.typing_pos_and_bounds.bounds,
                 &mut self.input_pos_and_bounds.position,
+            );
+
+            let timer_width = 1.1 * timer_character_dim.x;
+            self.timer_pos_and_bounds.bounds = vec2(timer_width, input_height);
+            self.timer_pos_and_bounds.position = vec2(
+                self.typing_pos_and_bounds.position.x + self.typing_pos_and_bounds.bounds.x
+                    - timer_width,
+                self.input_pos_and_bounds.position.y,
             );
         }
 
@@ -592,6 +612,12 @@ impl<'a> App<'a> {
             self.typing_pos_and_bounds.position - vec2(0.0, self.typing_pos_and_bounds.bounds.y),
             0.5,
         );
+        self.draw_quad(
+            BLACK,
+            self.timer_pos_and_bounds.bounds,
+            self.timer_pos_and_bounds.position,
+            1.0,
+        );
 
         if let Some(typing_test) = self.typing_test.as_ref() {
             // TODO: skip the full entered lines before current word...
@@ -607,24 +633,32 @@ impl<'a> App<'a> {
                 &self.main_depth,
             )?;
 
+            let input_layout = Layout::default_single_line().v_align(VerticalAlign::Center);
             let input_section = Section {
                 text: &typing_test.entered_text,
                 color: PENDING_WORD_COLOR,
                 font_id: self.roboto_font_id,
                 scale: Scale::uniform((self.typing_font_size * self.dpi) as f32),
                 bounds: self.input_pos_and_bounds.bounds.into(),
-                screen_position: self.input_pos_and_bounds.position.into(),
+                screen_position: self.input_pos_and_bounds.center_y().into(),
+                layout: input_layout,
                 ..Section::default()
             };
             self.glyph_brush.queue(input_section);
 
             // Render clock countdown timer
             if let Some(time_remaining) = typing_test.remaining_time_string() {
-                // TODO: position and bounds should be set
+                let layout = Layout::default_single_line()
+                    .h_align(HorizontalAlign::Center)
+                    .v_align(VerticalAlign::Center);
                 let time_section = Section {
                     text: &time_remaining,
                     font_id: self.iosevka_font_id,
                     scale: Scale::uniform((self.timer_font_size * self.dpi) as f32),
+                    bounds: self.timer_pos_and_bounds.bounds.into(),
+                    screen_position: self.timer_pos_and_bounds.center_point().into(),
+                    color: WHITE,
+                    layout: layout,
                     ..Section::default()
                 };
                 self.glyph_brush.queue(time_section);
