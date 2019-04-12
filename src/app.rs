@@ -421,7 +421,7 @@ impl<'a> App<'a> {
                             // FIXME: these are different! 48.0 vs. 39.0
                             // assert_eq!(self.typing_state.per_line_height, typing_character_dim.y);
                         }
-                        current_y = dbg!(glyph_y);
+                        current_y = glyph_y;
                     }
                     let char_count = word.chars().count();
                     // skip past all other characters in the word
@@ -432,10 +432,6 @@ impl<'a> App<'a> {
                     }
                     self.typing_state.num_words += 1;
                 }
-                println!(
-                    "first_word_idxes: {:?}",
-                    self.typing_state.first_word_idx_per_line
-                );
             }
         }
     }
