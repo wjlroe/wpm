@@ -1,4 +1,3 @@
-use crate::screen::Screen;
 use crate::screens;
 use crate::*;
 use glutin::dpi::*;
@@ -10,7 +9,7 @@ pub struct App<'a> {
     running: bool,
     gfx_window: GfxWindow<'a>,
     mouse_position: LogicalPosition,
-    current_screen: Box<dyn Screen>,
+    current_screen: Box<Screen>,
 }
 
 impl<'a> Default for App<'a> {
@@ -70,6 +69,10 @@ impl<'a> App<'a> {
 
     fn update(&mut self, dt: f32) {
         self.current_screen.update(dt, &mut self.gfx_window);
+
+        if let Some(new_screen) = self.current_screen.maybe_change_to_screen() {
+            self.current_screen = new_screen
+        }
     }
 
     fn render(&mut self, dt: f32) -> Result<(), Box<dyn Error>> {

@@ -1,5 +1,4 @@
 use crate::layout::ElementLayout;
-use crate::screen::Screen;
 use crate::*;
 use cgmath::*;
 use gfx_glyph::{GlyphCruncher, HorizontalAlign, Layout, Scale, Section, VerticalAlign};
@@ -207,6 +206,15 @@ impl TestScreen {
 }
 
 impl Screen for TestScreen {
+    fn maybe_change_to_screen(&self) -> Option<Box<Screen>> {
+        if self.typing_test.ended {
+            let typing_result = self.typing_test.result();
+            Some(Box::new(ResultsScreen::new(typing_result)))
+        } else {
+            None
+        }
+    }
+
     fn process_events(&mut self, _dt: f32, events: &[Event]) {
         for event in events.iter() {
             if let Event::WindowEvent {

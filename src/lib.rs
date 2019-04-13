@@ -23,6 +23,8 @@ pub use input::*;
 pub use maths::*;
 pub use quad::*;
 pub use rect::Rect;
+pub use screen::Screen;
+pub use screens::*;
 pub use typing_result::TypingResult;
 pub use typing_state::TypingState;
 pub use typing_test::{EnteredWord, TypingTest};
