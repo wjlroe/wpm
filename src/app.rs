@@ -24,7 +24,13 @@ impl<'a> App<'a> {
             running: true,
             gfx_window: GfxWindow::new(),
             mouse_position: LogicalPosition::new(0.0, 0.0),
-            current_screen: Box::new(screens::TestScreen::new()),
+            // current_screen: Box::new(screens::TestScreen::new()),
+            current_screen: Box::new(screens::ResultsScreen::new(TypingResult::new(
+                82,
+                2,
+                5,
+                std::time::Duration::from_secs(60),
+            ))),
         }
     }
 
