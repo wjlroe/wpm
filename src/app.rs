@@ -3,12 +3,14 @@ use crate::*;
 use glutin::dpi::*;
 use glutin::*;
 use std::error::Error;
-use std::time::Instant;
+use std::thread;
+use std::time::{Duration, Instant};
 
 pub struct App<'a> {
     running: bool,
     gfx_window: GfxWindow<'a>,
     mouse_position: LogicalPosition,
+    render_screen: bool,
     current_screen: Box<Screen>,
 }
 
@@ -20,23 +22,25 @@ impl<'a> Default for App<'a> {
 
 impl<'a> App<'a> {
     pub fn new() -> Self {
+        let mut gfx_window = GfxWindow::new();
+        let screen = screens::ResultsScreen::new(
+            TypingResult::new(82, 2, 5, std::time::Duration::from_secs(60)),
+            &mut gfx_window,
+        );
         App {
             running: true,
-            gfx_window: GfxWindow::new(),
+            gfx_window,
             mouse_position: LogicalPosition::new(0.0, 0.0),
+            render_screen: true,
             // current_screen: Box::new(screens::TestScreen::new()),
-            current_screen: Box::new(screens::ResultsScreen::new(TypingResult::new(
-                82,
-                2,
-                5,
-                std::time::Duration::from_secs(60),
-            ))),
+            current_screen: Box::new(screen),
         }
     }
 
     fn window_resized(&mut self, dt: f32) {
         self.gfx_window.resize();
         self.current_screen.window_resized(&mut self.gfx_window);
+        self.render_screen = true;
         let _ = self.render(dt);
     }
 
@@ -74,10 +78,17 @@ impl<'a> App<'a> {
     }
 
     fn update(&mut self, dt: f32) {
-        self.current_screen.update(dt, &mut self.gfx_window);
+        self.render_screen = self.current_screen.update(dt, &mut self.gfx_window);
 
-        if let Some(new_screen) = self.current_screen.maybe_change_to_screen() {
+        if let Some(new_screen) = self
+            .current_screen
+            .maybe_change_to_screen(&mut self.gfx_window)
+        {
             self.current_screen = new_screen
+        } else {
+            if !self.render_screen {
+                thread::sleep(Duration::from_millis(100));
+            }
         }
     }
 

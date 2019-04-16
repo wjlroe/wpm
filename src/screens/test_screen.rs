@@ -206,10 +206,10 @@ impl TestScreen {
 }
 
 impl Screen for TestScreen {
-    fn maybe_change_to_screen(&self) -> Option<Box<Screen>> {
+    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
         if self.typing_test.ended {
             let typing_result = self.typing_test.result();
-            Some(Box::new(ResultsScreen::new(typing_result)))
+            Some(Box::new(ResultsScreen::new(typing_result, gfx_window)))
         } else {
             None
         }
@@ -251,13 +251,17 @@ impl Screen for TestScreen {
         self.update_font_metrics(gfx_window);
     }
 
-    fn update(&mut self, dt: f32, gfx_window: &mut GfxWindow) {
+    fn update(&mut self, dt: f32, gfx_window: &mut GfxWindow) -> bool {
+        let mut needs_render = false;
+
         if self.need_font_recalc {
             self.update_font_metrics(gfx_window);
             self.need_font_recalc = false;
+            needs_render = true;
         }
 
         if !self.typing_test.ended {
+            needs_render = true;
             if let Some(true) = self.typing_test.is_done() {
                 println!("Typing test is done!");
                 self.typing_test.end();
@@ -268,6 +272,8 @@ impl Screen for TestScreen {
                 self.typing_state.update(dt);
             }
         }
+
+        needs_render
     }
 
     fn render(&self, _dt: f32, gfx_window: &mut GfxWindow) -> Result<(), Box<dyn Error>> {
