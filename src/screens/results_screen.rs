@@ -155,13 +155,11 @@ impl ResultsScreen {
         .iter()
         .map(|label| label.rect.bounds.x)
         .max_by(|width_a, width_b| {
-            println!("(labels) width_a: {}, width_b: {}", width_a, width_b);
             width_a
                 .partial_cmp(width_b)
                 .unwrap_or(std::cmp::Ordering::Equal)
         })
         .unwrap_or(0.0);
-        println!("longest_width_of_labels: {}", longest_width_of_labels);
 
         let longest_width_of_values = vec![
             &self.wpm_value,
@@ -172,13 +170,11 @@ impl ResultsScreen {
         .iter()
         .map(|label| label.rect.bounds.x)
         .max_by(|width_a, width_b| {
-            println!("(values) width_a: {}, width_b: {}", width_a, width_b);
             width_a
                 .partial_cmp(width_b)
                 .unwrap_or(std::cmp::Ordering::Equal)
         })
         .unwrap_or(0.0);
-        println!("longest_width_of_values: {}", longest_width_of_values);
 
         let line_width = longest_width_of_labels + longest_width_of_values;
 
