@@ -69,14 +69,15 @@ impl<'a> GfxWindow<'a> {
 
         let mut fonts = Fonts::default();
 
-        let mut glyph_brush =
-            GlyphBrushBuilder::using_font_bytes(include_bytes!("iosevka-regular.ttf") as &[u8])
-                .initial_cache_size((512, 512))
-                .depth_test(preset::depth::LESS_EQUAL_WRITE)
-                .build(factory.clone());
+        let mut glyph_brush = GlyphBrushBuilder::using_font_bytes(include_bytes!(
+            "fonts/iosevka-regular.ttf"
+        ) as &[u8])
+        .initial_cache_size((512, 512))
+        .depth_test(preset::depth::LESS_EQUAL_WRITE)
+        .build(factory.clone());
         fonts.iosevka_font_id = FontId::default();
         fonts.roboto_font_id =
-            glyph_brush.add_font_bytes(include_bytes!("Roboto-Regular.ttf") as &[u8]);
+            glyph_brush.add_font_bytes(include_bytes!("fonts/Roboto-Regular.ttf") as &[u8]);
 
         let encoder: Encoder<_, _> = factory.create_command_buffer().into();
 
