@@ -69,6 +69,16 @@ impl<'a> App<'a> {
                     WindowEvent::CursorMoved { position, .. } => {
                         self.mouse_position = *position;
                     }
+                    WindowEvent::MouseInput {
+                        state: ElementState::Pressed,
+                        ..
+                    } => {
+                        println!(
+                            "click: {:?} (physical): {:?}",
+                            self.mouse_position,
+                            self.mouse_position.to_physical(self.gfx_window.dpi)
+                        );
+                    }
                     _ => {}
                 },
                 _ => {}
