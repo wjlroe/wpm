@@ -17,6 +17,8 @@ const NORMAL_LABEL_FONT_SIZE: f32 = 32.0;
 const HEADLINE_LABEL_FONT_SIZE: f32 = 40.0;
 const HEADLINE_VALUE_FONT_SIZE: f32 = 48.0;
 
+static mut HAVE_PRINTED_SECTIONS: bool = false;
+
 #[derive(Default)]
 struct Label {
     font_size: f32,
@@ -58,9 +60,9 @@ impl Label {
     fn recalc(&mut self, gfx_window: &mut GfxWindow) {
         let section = self.section(gfx_window);
         if let Some(dim) = gfx_window.glyph_brush.pixel_bounds(section).map(|bounds| {
-            let width = bounds.max.x - bounds.min.x;
-            let height = bounds.max.y - bounds.min.y;
-            vec2(width as f32 / 2.0, height as f32)
+            let width = bounds.max.x;
+            let height = bounds.max.y;
+            vec2(width as f32, height as f32)
         }) {
             self.rect.bounds = dim;
         }
@@ -153,11 +155,13 @@ impl ResultsScreen {
         .iter()
         .map(|label| label.rect.bounds.x)
         .max_by(|width_a, width_b| {
+            println!("(labels) width_a: {}, width_b: {}", width_a, width_b);
             width_a
                 .partial_cmp(width_b)
                 .unwrap_or(std::cmp::Ordering::Equal)
         })
         .unwrap_or(0.0);
+        println!("longest_width_of_labels: {}", longest_width_of_labels);
 
         let longest_width_of_values = vec![
             &self.wpm_value,
@@ -168,11 +172,13 @@ impl ResultsScreen {
         .iter()
         .map(|label| label.rect.bounds.x)
         .max_by(|width_a, width_b| {
+            println!("(values) width_a: {}, width_b: {}", width_a, width_b);
             width_a
                 .partial_cmp(width_b)
                 .unwrap_or(std::cmp::Ordering::Equal)
         })
         .unwrap_or(0.0);
+        println!("longest_width_of_values: {}", longest_width_of_values);
 
         let line_width = longest_width_of_labels + longest_width_of_values;
 
@@ -201,10 +207,15 @@ impl ResultsScreen {
         );
         backspaces_rect.bounds.x = line_width;
 
+        let padding_rect = vec2(line_width, 5.0);
+
         let mut vertical_layout = ElementLayout::vertical(gfx_window.window_dim());
         let result_rect_elem = vertical_layout.add_bounds(result_rect.bounds);
+        let _ = vertical_layout.add_bounds(padding_rect);
         let correct_rect_elem = vertical_layout.add_bounds(correct_rect.bounds);
+        let _ = vertical_layout.add_bounds(padding_rect);
         let incorrect_rect_elem = vertical_layout.add_bounds(incorrect_rect.bounds);
+        let _ = vertical_layout.add_bounds(padding_rect);
         let backspaces_rect_elem = vertical_layout.add_bounds(backspaces_rect.bounds);
         vertical_layout.calc_positions();
         self.wpm_label.rect.position = vertical_layout.element_position(result_rect_elem);
@@ -227,10 +238,15 @@ impl ResultsScreen {
         self.incorrect_label.rect.position.x = left_margin;
         self.backspaces_label.rect.position.x = left_margin;
 
-        self.wpm_value.rect.position.x = left_margin + longest_width_of_labels;
-        self.correct_value.rect.position.x = left_margin + longest_width_of_labels;
-        self.incorrect_value.rect.position.x = left_margin + longest_width_of_labels;
-        self.backspaces_value.rect.position.x = left_margin + longest_width_of_labels;
+        let vertical_padding = 5.0;
+
+        self.wpm_value.rect.position.x = left_margin + vertical_padding + longest_width_of_labels;
+        self.correct_value.rect.position.x =
+            left_margin + vertical_padding + longest_width_of_labels;
+        self.incorrect_value.rect.position.x =
+            left_margin + vertical_padding + longest_width_of_labels;
+        self.backspaces_value.rect.position.x =
+            left_margin + vertical_padding + longest_width_of_labels;
     }
 }
 
@@ -274,11 +290,30 @@ impl Screen for ResultsScreen {
             &self.backspaces_label,
             &self.backspaces_value,
         ];
+        let mut quad_color = [1.0, 1.0, 1.0, 1.0];
+        let mut outline_color = [128.0 / 256.0, 0.0, 128.0 / 156.0, 1.0];
         for label in labels {
             let mut section = label.section(gfx_window);
             section.bounds = label.rect.bounds.into();
             section.screen_position = label.rect.position.into();
+            unsafe {
+                if !HAVE_PRINTED_SECTIONS {
+                    println!("{:?}", section);
+                }
+            }
+            quad_color[0] -= 0.1;
+            quad_color[1] -= 0.1;
+            quad_color[2] -= 0.1;
+            outline_color[0] -= 0.1;
+            outline_color[2] -= 0.1;
+            gfx_window.draw_quad(quad_color, &label.rect, 1.0);
+            gfx_window.draw_outline(outline_color, &label.rect, 1.0 - 0.1, 3.0);
             gfx_window.glyph_brush.queue(section);
+        }
+        unsafe {
+            if !HAVE_PRINTED_SECTIONS {
+                HAVE_PRINTED_SECTIONS = true;
+            }
         }
 
         gfx_window.glyph_brush.draw_queued(
