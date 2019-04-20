@@ -1,8 +1,8 @@
 use crate::layout::ElementLayout;
+use crate::screens;
 use crate::*;
 use cgmath::*;
 use gfx_glyph::{FontId, GlyphCruncher, Scale, Section};
-use glutin::*;
 use lazy_static::*;
 use std::error::Error;
 
@@ -72,6 +72,7 @@ impl Label {
 #[derive(Default)]
 pub struct ResultsScreen {
     need_font_recalc: bool,
+    go_back: bool,
     wpm_label: Label,
     wpm_value: Label,
     correct_label: Label,
@@ -80,12 +81,14 @@ pub struct ResultsScreen {
     incorrect_value: Label,
     backspaces_label: Label,
     backspaces_value: Label,
+    back_label: Label,
 }
 
 impl ResultsScreen {
     pub fn new(typing_result: TypingResult, gfx_window: &mut GfxWindow) -> Self {
         Self {
             need_font_recalc: true,
+            go_back: false,
             wpm_label: Label::new(
                 HEADLINE_LABEL_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
@@ -140,6 +143,13 @@ impl ResultsScreen {
                 gfx_window.fonts.iosevka_font_id,
                 BLACK,
                 format!("{}", typing_result.backspaces),
+                gfx_window,
+            ),
+            back_label: Label::new(
+                NORMAL_LABEL_FONT_SIZE,
+                gfx_window.fonts.roboto_font_id,
+                BLACK,
+                String::from("< Back"),
                 gfx_window,
             ),
         }
@@ -243,15 +253,25 @@ impl ResultsScreen {
             left_margin + vertical_padding + longest_width_of_labels;
         self.backspaces_value.rect.position.x =
             left_margin + vertical_padding + longest_width_of_labels;
+
+        self.back_label.rect.position = vec2(20.0, 20.0);
     }
 }
 
 impl Screen for ResultsScreen {
     fn maybe_change_to_screen(&self, _gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
-        None
+        if self.go_back {
+            Some(Box::new(screens::TestScreen::new()))
+        } else {
+            None
+        }
     }
 
-    fn process_events(&mut self, _dt: f32, _events: &[Event]) {}
+    fn mouse_click(&mut self, position: Vector2<f32>) {
+        if self.back_label.rect.contains_point(position) {
+            self.go_back = true;
+        }
+    }
 
     fn update(&mut self, _dt: f32, gfx_window: &mut GfxWindow) -> bool {
         // animate the WPM figure counting upwards
@@ -285,6 +305,7 @@ impl Screen for ResultsScreen {
             &self.incorrect_value,
             &self.backspaces_label,
             &self.backspaces_value,
+            &self.back_label,
         ];
         let mut quad_color = [1.0, 1.0, 1.0, 1.0];
         let mut outline_color = [128.0 / 256.0, 0.0, 128.0 / 156.0, 1.0];

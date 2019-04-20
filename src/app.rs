@@ -1,5 +1,6 @@
 use crate::screens;
 use crate::*;
+use cgmath::*;
 use glutin::dpi::*;
 use glutin::*;
 use std::error::Error;
@@ -68,11 +69,9 @@ impl<'a> App<'a> {
                         state: ElementState::Pressed,
                         ..
                     } => {
-                        println!(
-                            "click: {:?} (physical): {:?}",
-                            self.mouse_position,
-                            self.mouse_position.to_physical(self.gfx_window.dpi)
-                        );
+                        let physical_mouse = self.mouse_position.to_physical(self.gfx_window.dpi);
+                        self.current_screen
+                            .mouse_click(vec2(physical_mouse.x as f32, physical_mouse.y as f32));
                     }
                     _ => {}
                 },
