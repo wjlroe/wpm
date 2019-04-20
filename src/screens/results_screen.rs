@@ -14,7 +14,7 @@ lazy_static! {
 }
 
 const NORMAL_LABEL_FONT_SIZE: f32 = 32.0;
-const HEADLINE_LABEL_FONT_SIZE: f32 = 40.0;
+const HEADLINE_LABEL_FONT_SIZE: f32 = 48.0;
 const HEADLINE_VALUE_FONT_SIZE: f32 = 48.0;
 
 static mut HAVE_PRINTED_SECTIONS: bool = false;
@@ -234,7 +234,7 @@ impl ResultsScreen {
         self.incorrect_label.rect.position.x = left_margin;
         self.backspaces_label.rect.position.x = left_margin;
 
-        let vertical_padding = 5.0;
+        let vertical_padding = 15.0;
 
         self.wpm_value.rect.position.x = left_margin + vertical_padding + longest_width_of_labels;
         self.correct_value.rect.position.x =
