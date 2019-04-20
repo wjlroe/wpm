@@ -22,18 +22,13 @@ impl<'a> Default for App<'a> {
 
 impl<'a> App<'a> {
     pub fn new() -> Self {
-        let mut gfx_window = GfxWindow::new();
-        let screen = screens::ResultsScreen::new(
-            TypingResult::new(82, 2, 5, std::time::Duration::from_secs(60)),
-            &mut gfx_window,
-        );
+        let gfx_window = GfxWindow::new();
         App {
             running: true,
             gfx_window,
             mouse_position: LogicalPosition::new(0.0, 0.0),
             render_screen: true,
-            // current_screen: Box::new(screens::TestScreen::new()),
-            current_screen: Box::new(screen),
+            current_screen: Box::new(screens::TestScreen::new()),
         }
     }
 
