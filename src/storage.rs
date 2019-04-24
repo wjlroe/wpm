@@ -16,19 +16,24 @@ pub fn read_results<R: Read>(rd: &mut R) -> Result<Vec<TypingResult>, Box<dyn Er
 
     let mut typing_result = TypingResult::default();
 
-    match decode::read_i32(rd) {
-        Err(decode::ValueReadError::InvalidMarkerRead(ref error))
-            if error.kind() == ErrorKind::UnexpectedEof => {}
-        Err(error) => {
-            return Err(Box::new(error));
-        }
-        Ok(correct_words) => {
-            typing_result.correct_words = correct_words;
-            typing_result.incorrect_words = decode::read_i32(rd)?;
-            typing_result.backspaces = decode::read_i32(rd)?;
-            typing_result.wpm = decode::read_i32(rd)?;
+    loop {
+        match decode::read_i32(rd) {
+            Err(decode::ValueReadError::InvalidMarkerRead(ref error))
+                if error.kind() == ErrorKind::UnexpectedEof =>
+            {
+                break
+            }
+            Err(error) => {
+                return Err(Box::new(error));
+            }
+            Ok(correct_words) => {
+                typing_result.correct_words = correct_words;
+                typing_result.incorrect_words = decode::read_i32(rd)?;
+                typing_result.backspaces = decode::read_i32(rd)?;
+                typing_result.wpm = decode::read_i32(rd)?;
 
-            results.push(typing_result);
+                results.push(typing_result);
+            }
         }
     }
 
@@ -61,4 +66,38 @@ fn test_write_new_typing_result_to_blank_file_and_read_it_back() {
 
     assert_eq!(1, all_results.len());
     assert_eq!(typing_result, all_results[0]);
+}
+
+#[test]
+fn test_write_multiple_typing_results_to_blank_file_and_read_them_all_back() {
+    let mut buffer = Vec::new();
+
+    let typing_results = vec![
+        TypingResult {
+            correct_words: 87,
+            incorrect_words: 3,
+            backspaces: 2,
+            wpm: 87,
+        },
+        TypingResult {
+            correct_words: 15,
+            incorrect_words: 0,
+            backspaces: 25,
+            wpm: 15,
+        },
+        TypingResult {
+            correct_words: 125,
+            incorrect_words: 65,
+            backspaces: 7,
+            wpm: 125,
+        },
+    ];
+
+    for typing_result in &typing_results {
+        let _ = save_result(&mut buffer, typing_result);
+    }
+
+    let all_results = read_results(&mut &buffer[..]).expect("Read back the results");
+
+    assert_eq!(typing_results, all_results);
 }
