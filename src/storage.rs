@@ -1,7 +1,7 @@
 use crate::*;
 use rmp::*;
 use std::error::Error;
-use std::io::{Read, Write};
+use std::io::{ErrorKind, Read, Write};
 
 pub fn save_result<W: Write>(wr: &mut W, test_result: &TypingResult) -> Result<(), Box<dyn Error>> {
     encode::write_i32(wr, test_result.correct_words)?;
@@ -15,14 +15,33 @@ pub fn read_results<R: Read>(rd: &mut R) -> Result<Vec<TypingResult>, Box<dyn Er
     let mut results = Vec::new();
 
     let mut typing_result = TypingResult::default();
-    typing_result.correct_words = decode::read_i32(rd)?;
-    typing_result.incorrect_words = decode::read_i32(rd)?;
-    typing_result.backspaces = decode::read_i32(rd)?;
-    typing_result.wpm = decode::read_i32(rd)?;
 
-    results.push(typing_result);
+    match decode::read_i32(rd) {
+        Err(decode::ValueReadError::InvalidMarkerRead(ref error))
+            if error.kind() == ErrorKind::UnexpectedEof => {}
+        Err(error) => {
+            return Err(Box::new(error));
+        }
+        Ok(correct_words) => {
+            typing_result.correct_words = correct_words;
+            typing_result.incorrect_words = decode::read_i32(rd)?;
+            typing_result.backspaces = decode::read_i32(rd)?;
+            typing_result.wpm = decode::read_i32(rd)?;
+
+            results.push(typing_result);
+        }
+    }
 
     Ok(results)
+}
+
+#[test]
+fn test_read_an_empty_set_of_results() {
+    let buffer = Vec::new();
+
+    let all_results = read_results(&mut &buffer[..]).expect("Read back the results");
+
+    assert_eq!(0, all_results.len());
 }
 
 #[test]
