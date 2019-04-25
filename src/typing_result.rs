@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 #[derive(Copy, Clone, Default, Debug, PartialEq)]
 pub struct TypingResult {
@@ -6,6 +6,7 @@ pub struct TypingResult {
     pub incorrect_words: i32,
     pub backspaces: i32,
     pub wpm: i32,
+    pub time: u64,
 }
 
 impl TypingResult {
@@ -16,12 +17,17 @@ impl TypingResult {
         duration: Duration,
     ) -> Self {
         let wpm = (f64::from(correct_words) / (duration.as_secs() as f64 / 60.0)).floor() as i32;
+        let time = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("SystemTime to work!")
+            .as_secs();
 
         Self {
             correct_words,
             incorrect_words,
             backspaces,
             wpm,
+            time,
         }
     }
 }

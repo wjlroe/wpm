@@ -10,9 +10,10 @@ use std::path::PathBuf;
 #[repr(i8)]
 enum StorageVersions {
     V1 = 0x01,
+    V2 = 0x02,
 }
 
-pub const CURRENT_VERSION: i8 = StorageVersions::V1 as i8;
+pub const CURRENT_VERSION: i8 = StorageVersions::V2 as i8;
 
 lazy_static! {
     pub static ref RESULTS_PATH: PathBuf =
@@ -37,6 +38,7 @@ pub fn save_result<W: Write>(wr: &mut W, test_result: &TypingResult) -> Result<(
     encode::write_i32(wr, test_result.incorrect_words)?;
     encode::write_i32(wr, test_result.backspaces)?;
     encode::write_i32(wr, test_result.wpm)?;
+    encode::write_u64(wr, test_result.time)?;
     Ok(())
 }
 
@@ -63,6 +65,8 @@ pub fn read_results<R: Read>(rd: &mut R) -> Result<Vec<TypingResult>, Box<dyn Er
                 typing_result.incorrect_words = decode::read_i32(rd)?;
                 typing_result.backspaces = decode::read_i32(rd)?;
                 typing_result.wpm = decode::read_i32(rd)?;
+                // FIXME: move this to an upgrade from v1->v2
+                typing_result.time = decode::read_u64(rd)?;
 
                 results.push(typing_result);
             }
@@ -90,6 +94,7 @@ fn test_write_new_typing_result_to_blank_file_and_read_it_back() {
         incorrect_words: 3,
         backspaces: 2,
         wpm: 87,
+        time: 1556223259,
     };
 
     let _ = save_result(&mut buffer, &typing_result);
@@ -110,18 +115,21 @@ fn test_write_multiple_typing_results_to_blank_file_and_read_them_all_back() {
             incorrect_words: 3,
             backspaces: 2,
             wpm: 87,
+            time: 1556223259,
         },
         TypingResult {
             correct_words: 15,
             incorrect_words: 0,
             backspaces: 25,
             wpm: 15,
+            time: 1556223307,
         },
         TypingResult {
             correct_words: 125,
             incorrect_words: 65,
             backspaces: 7,
             wpm: 125,
+            time: 1556223329,
         },
     ];
 
