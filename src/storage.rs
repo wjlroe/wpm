@@ -43,8 +43,6 @@ pub fn save_result<W: Write>(wr: &mut W, test_result: &TypingResult) -> Result<(
 pub fn read_results<R: Read>(rd: &mut R) -> Result<Vec<TypingResult>, Box<dyn Error>> {
     let mut results = Vec::new();
 
-    let mut typing_result = TypingResult::default();
-
     loop {
         match decode::read_ext_meta(rd) {
             Err(decode::ValueReadError::InvalidMarkerRead(ref error))
@@ -59,6 +57,8 @@ pub fn read_results<R: Read>(rd: &mut R) -> Result<Vec<TypingResult>, Box<dyn Er
                 typeid: _version_num,
                 ..
             }) => {
+                let mut typing_result = TypingResult::default();
+
                 typing_result.correct_words = decode::read_i32(rd)?;
                 typing_result.incorrect_words = decode::read_i32(rd)?;
                 typing_result.backspaces = decode::read_i32(rd)?;
