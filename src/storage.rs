@@ -1,9 +1,38 @@
 use crate::*;
+use dirs::*;
+use lazy_static::*;
 use rmp::*;
 use std::error::Error;
+use std::fs::{DirBuilder, OpenOptions};
 use std::io::{ErrorKind, Read, Write};
+use std::path::PathBuf;
+
+#[repr(i8)]
+enum StorageVersions {
+    V1 = 0x01,
+}
+
+pub const CURRENT_VERSION: i8 = StorageVersions::V1 as i8;
+
+lazy_static! {
+    pub static ref RESULTS_PATH: PathBuf =
+        config_dir().unwrap().join("wpm").join("typing_results.wpm");
+}
+
+pub fn save_result_to_file(typing_result: &TypingResult) -> Result<(), Box<dyn Error>> {
+    if let Some(dir_name) = RESULTS_PATH.parent() {
+        DirBuilder::new().recursive(true).create(dir_name)?;
+    }
+    let mut fd = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(RESULTS_PATH.as_path())?;
+    save_result(&mut fd, typing_result)
+}
 
 pub fn save_result<W: Write>(wr: &mut W, test_result: &TypingResult) -> Result<(), Box<dyn Error>> {
+    encode::write_ext_meta(wr, 1, CURRENT_VERSION)?;
     encode::write_i32(wr, test_result.correct_words)?;
     encode::write_i32(wr, test_result.incorrect_words)?;
     encode::write_i32(wr, test_result.backspaces)?;
@@ -17,7 +46,7 @@ pub fn read_results<R: Read>(rd: &mut R) -> Result<Vec<TypingResult>, Box<dyn Er
     let mut typing_result = TypingResult::default();
 
     loop {
-        match decode::read_i32(rd) {
+        match decode::read_ext_meta(rd) {
             Err(decode::ValueReadError::InvalidMarkerRead(ref error))
                 if error.kind() == ErrorKind::UnexpectedEof =>
             {
@@ -26,8 +55,11 @@ pub fn read_results<R: Read>(rd: &mut R) -> Result<Vec<TypingResult>, Box<dyn Er
             Err(error) => {
                 return Err(Box::new(error));
             }
-            Ok(correct_words) => {
-                typing_result.correct_words = correct_words;
+            Ok(decode::ExtMeta {
+                typeid: _version_num,
+                ..
+            }) => {
+                typing_result.correct_words = decode::read_i32(rd)?;
                 typing_result.incorrect_words = decode::read_i32(rd)?;
                 typing_result.backspaces = decode::read_i32(rd)?;
                 typing_result.wpm = decode::read_i32(rd)?;
