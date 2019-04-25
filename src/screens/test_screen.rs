@@ -209,6 +209,12 @@ impl Screen for TestScreen {
     fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
         if self.typing_test.ended {
             let typing_result = self.typing_test.result();
+            match storage::save_result_to_file(&typing_result) {
+                Err(error) => {
+                    println!("Error saving results to file: {:?}", error);
+                }
+                _ => {}
+            };
             Some(Box::new(ResultsScreen::new(typing_result, gfx_window)))
         } else {
             None
