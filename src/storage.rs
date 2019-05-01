@@ -27,8 +27,8 @@ lazy_static! {
 
 #[derive(Default, Debug)]
 pub struct ReadTypingResults {
-    results: Vec<TypingResult>,
-    records_need_upgrading: bool, // If older versions were read, we need to save them back
+    pub results: Vec<TypingResult>,
+    pub records_need_upgrading: bool, // If older versions were read, we need to save them back
 }
 
 fn read_results<R: Read>(rd: &mut R) -> Result<ReadTypingResults, Box<dyn Error>> {
