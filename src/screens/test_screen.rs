@@ -28,6 +28,7 @@ pub struct TestScreen {
     typing_test: TypingTest,
     typing_state: TypingState,
     show_listing_label: Label,
+    goto_listing: bool,
 }
 
 impl TestScreen {
@@ -232,7 +233,9 @@ impl TestScreen {
 
 impl Screen for TestScreen {
     fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
-        if self.typing_test.ended {
+        if self.goto_listing {
+            Some(Box::new(ResultsListScreen::new(gfx_window)))
+        } else if self.typing_test.ended {
             let typing_result = self.typing_test.result();
             match storage::save_result_to_file(&typing_result) {
                 Err(error) => {
@@ -275,6 +278,12 @@ impl Screen for TestScreen {
                     _ => {}
                 }
             }
+        }
+    }
+
+    fn mouse_click(&mut self, position: Vector2<f32>) {
+        if self.show_listing_label.rect.contains_point(position) {
+            self.goto_listing = true;
         }
     }
 
