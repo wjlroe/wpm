@@ -291,7 +291,12 @@ impl Screen for TestScreen {
         self.update_font_metrics(gfx_window);
     }
 
-    fn update(&mut self, dt: f32, gfx_window: &mut GfxWindow) -> bool {
+    fn update(
+        &mut self,
+        dt: f32,
+        _mouse_position: Vector2<f32>,
+        gfx_window: &mut GfxWindow,
+    ) -> bool {
         let mut needs_render = false;
 
         if self.need_font_recalc {

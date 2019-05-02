@@ -166,7 +166,12 @@ impl Screen for ResultsListScreen {
         // check if mouse is positioned over one of the results rows
     }
 
-    fn update(&mut self, _dt: f32, gfx_window: &mut GfxWindow) -> bool {
+    fn update(
+        &mut self,
+        _dt: f32,
+        _mouse_position: Vector2<f32>,
+        gfx_window: &mut GfxWindow,
+    ) -> bool {
         if self.need_font_recalc {
             self.update_font_metrics(gfx_window);
             self.need_font_recalc = false;

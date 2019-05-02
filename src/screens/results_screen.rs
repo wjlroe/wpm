@@ -223,7 +223,12 @@ impl Screen for ResultsScreen {
         }
     }
 
-    fn update(&mut self, _dt: f32, gfx_window: &mut GfxWindow) -> bool {
+    fn update(
+        &mut self,
+        _dt: f32,
+        _mouse_position: Vector2<f32>,
+        gfx_window: &mut GfxWindow,
+    ) -> bool {
         // animate the WPM figure counting upwards
         if self.need_font_recalc {
             self.update_font_metrics(gfx_window);

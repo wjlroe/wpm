@@ -83,7 +83,12 @@ impl<'a> App<'a> {
     }
 
     fn update(&mut self, dt: f32) {
-        self.render_screen = self.current_screen.update(dt, &mut self.gfx_window);
+        let physical_mouse = self.mouse_position.to_physical(self.gfx_window.dpi);
+        self.render_screen = self.current_screen.update(
+            dt,
+            vec2(physical_mouse.x as f32, physical_mouse.y as f32),
+            &mut self.gfx_window,
+        );
 
         if let Some(new_screen) = self
             .current_screen
