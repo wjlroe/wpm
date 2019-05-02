@@ -6,6 +6,7 @@ use std::error::Error;
 pub trait Screen {
     // TODO: probably pass in some sort of collection of available screens
     // screens = Vec<Screen>
+    // screen_stack = Vec<Screen> - push screens on, pop then off to go back
     // current_screen = Rc<Screen>
     // so maybe static vec of screens, modify when need to transition to one
     // then return the enum variant that signifies the screen to transition to
