@@ -30,6 +30,7 @@ impl Label {
         label
     }
 
+    // FIXME: rename this section_without_bounds_or_position() because I forget this is that!
     pub fn section(&self, gfx_window: &mut GfxWindow) -> Section {
         Section {
             font_id: self.font_id,
