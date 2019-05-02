@@ -208,9 +208,10 @@ impl ResultsScreen {
 }
 
 impl Screen for ResultsScreen {
-    fn maybe_change_to_screen(&self, _gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
+    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
         if self.go_back {
-            Some(Box::new(screens::TestScreen::new()))
+            let screen = screens::TestScreen::new(gfx_window);
+            Some(Box::new(screen))
         } else {
             None
         }

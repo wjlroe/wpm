@@ -3,8 +3,18 @@ use crate::*;
 use cgmath::*;
 use gfx_glyph::{GlyphCruncher, HorizontalAlign, Layout, Scale, Section, VerticalAlign};
 use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
+use lazy_static::*;
 use std::error::Error;
 use std::time::Duration;
+
+const LISTING_BUTTON_FONT_SIZE: f32 = 68.0;
+
+lazy_static! {
+    static ref LISTING_BUTTON_BG: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Violet)
+        .cloned()
+        .unwrap();
+}
 
 #[derive(Default)]
 pub struct TestScreen {
@@ -17,14 +27,24 @@ pub struct TestScreen {
     input_pos_and_bounds: Rect,
     typing_test: TypingTest,
     typing_state: TypingState,
+    show_listing_label: Label,
 }
 
 impl TestScreen {
-    pub fn new() -> Self {
+    pub fn new(gfx_window: &mut GfxWindow) -> Self {
+        let mut show_listing_label = Label::new(
+            LISTING_BUTTON_FONT_SIZE,
+            gfx_window.fonts.iosevka_font_id,
+            BLACK,
+            String::from("≡"),
+            gfx_window,
+        );
+        show_listing_label.rect.bounds.x *= 1.5;
         let mut test_screen = Self {
             need_font_recalc: true,
             timer_font_size: 48.0,
             typing_font_size: 32.0,
+            show_listing_label,
             ..TestScreen::default()
         };
         test_screen.start_test();
@@ -53,6 +73,11 @@ impl TestScreen {
     }
 
     fn update_font_metrics(&mut self, gfx_window: &mut GfxWindow) {
+        let left_and_top_padding = 15.0;
+
+        self.show_listing_label.rect.position.x = left_and_top_padding;
+        self.show_listing_label.rect.position.y = left_and_top_padding;
+
         let mut timer_character_dim = vec2(0.0, 0.0);
         let mut typing_character_dim = vec2(0.0, 0.0);
 
@@ -294,6 +319,7 @@ impl Screen for TestScreen {
         gfx_window.draw_quad(INPUT_BG, &self.input_pos_and_bounds, 1.0);
         gfx_window.draw_quad(TRANSPARENT, &self.typing_mask_pos_and_bounds, 0.5);
         gfx_window.draw_quad(BLACK, &self.timer_pos_and_bounds, 1.0);
+        gfx_window.draw_quad(*LISTING_BUTTON_BG, &self.show_listing_label.rect, 1.0);
 
         // TODO: skip the full entered lines before current word...
         let skip_num = self.typing_state.skip_num();
@@ -343,6 +369,14 @@ impl Screen for TestScreen {
             };
             gfx_window.glyph_brush.queue(time_section);
         }
+
+        let mut listing_button_section = self.show_listing_label.section(gfx_window);
+        listing_button_section.layout = Layout::default_single_line()
+            .v_align(VerticalAlign::Center)
+            .h_align(HorizontalAlign::Center);
+        listing_button_section.screen_position = self.show_listing_label.rect.center_point().into();
+        listing_button_section.bounds = self.show_listing_label.rect.bounds.into();
+        gfx_window.glyph_brush.queue(listing_button_section);
 
         gfx_window.glyph_brush.draw_queued(
             &mut gfx_window.encoder,

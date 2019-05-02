@@ -23,13 +23,14 @@ impl<'a> Default for App<'a> {
 
 impl<'a> App<'a> {
     pub fn new() -> Self {
-        let gfx_window = GfxWindow::new();
+        let mut gfx_window = GfxWindow::new();
+        let screen = screens::TestScreen::new(&mut gfx_window);
         App {
             running: true,
             gfx_window,
             mouse_position: LogicalPosition::new(0.0, 0.0),
             render_screen: true,
-            current_screen: Box::new(screens::TestScreen::new()),
+            current_screen: Box::new(screen),
         }
     }
 
