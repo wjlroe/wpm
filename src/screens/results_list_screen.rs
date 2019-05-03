@@ -51,6 +51,7 @@ impl ResultsListScreen {
                 Self::table_cell_label(format!("{}", typing_result.correct_words), gfx_window),
                 Self::table_cell_label(format!("{}", typing_result.incorrect_words), gfx_window),
                 Self::table_cell_label(format!("{}", typing_result.backspaces), gfx_window),
+                // FIXME: fix Date display - 0 is not valid!
                 Self::table_cell_label(format!("{}", typing_result.time), gfx_window),
             ]);
         }
