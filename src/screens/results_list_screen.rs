@@ -3,7 +3,6 @@ use crate::screens;
 use crate::*;
 use cgmath::*;
 use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
-use lazy_static::*;
 use std::error::Error;
 
 const TITLE_FONT_SIZE: f32 = 48.0;
@@ -11,20 +10,9 @@ const HEADER_FONT_SIZE: f32 = 32.0;
 const ROW_FONT_SIZE: f32 = 32.0;
 const TABLE_OUTLINE_WIDTH: f32 = 3.0;
 
-lazy_static! {
-    static ref TABLE_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Magenta)
-        .cloned()
-        .unwrap();
-    static ref ROW_HIGHLIGHT_BG: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Yellow)
-        .cloned()
-        .unwrap();
-    static ref TABLE_HEADER_UNDERLINE: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Magenta)
-        .cloned()
-        .unwrap();
-}
+const TABLE_OUTLINE_COLOR: ColorArray = MAGENTA;
+const ROW_HIGHLIGHT_BG: ColorArray = YELLOW;
+const TABLE_HEADER_UNDERLINE: ColorArray = MAGENTA;
 
 fn table_header_label(text: String, gfx_window: &mut GfxWindow) -> Label {
     Label::new(
@@ -377,16 +365,16 @@ impl Screen for ResultsListScreen {
         let mut header_underline_rect = self.table_header_rect;
         header_underline_rect.position.y += header_underline_rect.bounds.y + 10.0;
         header_underline_rect.bounds.y = 3.0;
-        gfx_window.draw_quad(*TABLE_HEADER_UNDERLINE, &header_underline_rect, 1.0);
+        gfx_window.draw_quad(TABLE_HEADER_UNDERLINE, &header_underline_rect, 1.0);
         gfx_window.draw_outline(
-            *TABLE_OUTLINE_COLOR,
+            TABLE_OUTLINE_COLOR,
             &self.table_rect,
             1.0 - 0.1,
             TABLE_OUTLINE_WIDTH,
         );
         if let Some(highlighted_row_idx) = self.highlighted_row {
             if let Some(table_row) = self.table_rows.get(highlighted_row_idx) {
-                gfx_window.draw_quad(*ROW_HIGHLIGHT_BG, &table_row.row_rect, 1.0 - 0.3);
+                gfx_window.draw_quad(ROW_HIGHLIGHT_BG, &table_row.row_rect, 1.0 - 0.3);
             }
         }
 
