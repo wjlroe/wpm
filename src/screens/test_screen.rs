@@ -170,7 +170,7 @@ impl TestScreen {
 
             self.input_pos_and_bounds.bounds.x -= self.timer_pos_and_bounds.bounds.x;
 
-            self.typing_mask_pos_and_bounds = self.typing_pos_and_bounds.clone();
+            self.typing_mask_pos_and_bounds = self.typing_pos_and_bounds;
             self.typing_mask_pos_and_bounds.position = self.typing_pos_and_bounds.position
                 - vec2(0.0, self.typing_pos_and_bounds.bounds.y);
         }

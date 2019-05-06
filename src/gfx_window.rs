@@ -143,7 +143,7 @@ impl<'a> GfxWindow<'a> {
 
     pub fn draw_outline(&mut self, color: [f32; 4], rect: &rect::Rect, z: f32, thickness: f32) {
         let window_dim = self.window_dim();
-        let mut inner_rect = rect.clone();
+        let mut inner_rect = *rect;
         inner_rect.bounds -= vec2(thickness * 2.0, thickness * 2.0);
         inner_rect.position += vec2(thickness, thickness);
         draw_quad(
