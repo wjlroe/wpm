@@ -29,7 +29,7 @@ impl<'a> App<'a> {
         let bg_switch_label = Label::new(
             32.0,
             gfx_window.fonts.iosevka_font_id,
-            Violet,
+            VIOLET,
             String::from("Switch BG color"),
             &mut gfx_window,
         );

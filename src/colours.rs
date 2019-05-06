@@ -50,25 +50,25 @@ macro_rules! color_array_from_rgb {
     };
 }
 
-pub const Base03: ColorArray = color_array_from_rgb!(0, 43, 54);
-pub const Base02: ColorArray = color_array_from_rgb!(7, 54, 66);
-pub const Base01: ColorArray = color_array_from_rgb!(88, 110, 117);
-pub const Base00: ColorArray = color_array_from_rgb!(101, 123, 131);
-pub const Base0: ColorArray = color_array_from_rgb!(131, 148, 150);
-pub const Base1: ColorArray = color_array_from_rgb!(147, 161, 161);
-pub const Base2: ColorArray = color_array_from_rgb!(238, 232, 213);
-pub const Base3: ColorArray = color_array_from_rgb!(253, 246, 227);
-pub const Yellow: ColorArray = color_array_from_rgb!(181, 137, 0);
-pub const Orange: ColorArray = color_array_from_rgb!(203, 75, 22);
-pub const Red: ColorArray = color_array_from_rgb!(220, 50, 47);
-pub const Magenta: ColorArray = color_array_from_rgb!(211, 54, 130);
-pub const Violet: ColorArray = color_array_from_rgb!(108, 113, 196);
-pub const Blue: ColorArray = color_array_from_rgb!(38, 139, 210);
-pub const Cyan: ColorArray = color_array_from_rgb!(42, 161, 152);
-pub const Green: ColorArray = color_array_from_rgb!(133, 153, 0);
+pub const BASE03: ColorArray = color_array_from_rgb!(0, 43, 54);
+pub const BASE02: ColorArray = color_array_from_rgb!(7, 54, 66);
+pub const BASE01: ColorArray = color_array_from_rgb!(88, 110, 117);
+pub const BASE00: ColorArray = color_array_from_rgb!(101, 123, 131);
+pub const BASE0: ColorArray = color_array_from_rgb!(131, 148, 150);
+pub const BASE1: ColorArray = color_array_from_rgb!(147, 161, 161);
+pub const BASE2: ColorArray = color_array_from_rgb!(238, 232, 213);
+pub const BASE3: ColorArray = color_array_from_rgb!(253, 246, 227);
+pub const YELLOW: ColorArray = color_array_from_rgb!(181, 137, 0);
+pub const ORANGE: ColorArray = color_array_from_rgb!(203, 75, 22);
+pub const RED: ColorArray = color_array_from_rgb!(220, 50, 47);
+pub const MAGENTA: ColorArray = color_array_from_rgb!(211, 54, 130);
+pub const VIOLET: ColorArray = color_array_from_rgb!(108, 113, 196);
+pub const BLUE: ColorArray = color_array_from_rgb!(38, 139, 210);
+pub const CYAN: ColorArray = color_array_from_rgb!(42, 161, 152);
+pub const GREEN: ColorArray = color_array_from_rgb!(133, 153, 0);
 
-pub const LIGHT_BG_COLOR: ColorArray = Base3;
-pub const DARK_BG_COLOR: ColorArray = Base03;
+pub const LIGHT_BG_COLOR: ColorArray = BASE3;
+pub const DARK_BG_COLOR: ColorArray = BASE03;
 
 thread_local! {
     pub static CURRENT_BG_COLOR: RefCell<BackgroundColor> = RefCell::new(default_bg_color());
