@@ -56,28 +56,35 @@ lazy_static! {
         }
         m
     };
+    pub static ref BG_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Base3)
+        .cloned()
+        .unwrap();
+    pub static ref TEXT_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Base00)
+        .cloned()
+        .unwrap();
+    pub static ref CORRECT_WORD_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Green)
+        .cloned()
+        .unwrap();
+    pub static ref INCORRECT_WORD_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Red)
+        .cloned()
+        .unwrap();
+    pub static ref INPUT_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Magenta)
+        .cloned()
+        .unwrap();
+    pub static ref TIMER_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Cyan)
+        .cloned()
+        .unwrap();
+    pub static ref TIMER_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Violet)
+        .cloned()
+        .unwrap();
 }
-
-// type ColorTriple = (u8, u8, u8);
-
-// We can't do float math in const fns!!!
-// const fn triple_to_array(triple: ColorTriple) -> ColorArray {
-//     [
-//         triple.0 as f32 / 255.0,
-//         triple.1 as f32 / 255.0,
-//         triple.2 as f32 / 255.0,
-//         1.0,
-//     ]
-// }
-
-pub const BG_COLOR: [f32; 4] = [0.22, 0.55, 0.3, 1.0];
-
-pub const CORRECT_WORD_COLOR: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-pub const INCORRECT_WORD_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-pub const PENDING_WORD_COLOR: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
-
-pub const TYPING_BG: [f32; 4] = [0.0, 0.0, 0.6, 1.0];
-pub const INPUT_BG: [f32; 4] = [0.1, 0.7, 0.3, 1.0];
 
 pub const TRANSPARENT: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 pub const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];

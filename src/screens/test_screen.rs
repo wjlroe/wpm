@@ -174,6 +174,8 @@ impl TestScreen {
                 self.input_pos_and_bounds.position.y,
             );
 
+            self.input_pos_and_bounds.bounds.x -= self.timer_pos_and_bounds.bounds.x;
+
             self.typing_mask_pos_and_bounds = self.typing_pos_and_bounds.clone();
             self.typing_mask_pos_and_bounds.position = self.typing_pos_and_bounds.position
                 - vec2(0.0, self.typing_pos_and_bounds.bounds.y);
@@ -324,18 +326,16 @@ impl Screen for TestScreen {
     fn render(&self, _dt: f32, gfx_window: &mut GfxWindow) -> Result<(), Box<dyn Error>> {
         gfx_window
             .encoder
-            .clear(&gfx_window.quad_bundle.data.out_color, BG_COLOR);
+            .clear(&gfx_window.quad_bundle.data.out_color, *BG_COLOR);
         gfx_window
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
-        gfx_window.draw_quad(TYPING_BG, &self.typing_pos_and_bounds, 1.0);
-        gfx_window.draw_quad(INPUT_BG, &self.input_pos_and_bounds, 1.0);
+        gfx_window.draw_outline(*INPUT_OUTLINE_COLOR, &self.input_pos_and_bounds, 0.8, 3.0);
         gfx_window.draw_quad(TRANSPARENT, &self.typing_mask_pos_and_bounds, 0.5);
-        gfx_window.draw_quad(BLACK, &self.timer_pos_and_bounds, 1.0);
+        gfx_window.draw_outline(*TIMER_OUTLINE_COLOR, &self.timer_pos_and_bounds, 1.0, 3.0);
         gfx_window.draw_quad(*LISTING_BUTTON_BG, &self.show_listing_label.rect, 1.0);
 
-        // TODO: skip the full entered lines before current word...
         let skip_num = self.typing_state.skip_num();
         let typed_section = self.typing_test.words_as_varied_section(
             skip_num,
@@ -356,7 +356,7 @@ impl Screen for TestScreen {
         let input_layout = Layout::default_single_line().v_align(VerticalAlign::Center);
         let input_section = Section {
             text: &self.typing_test.entered_text,
-            color: PENDING_WORD_COLOR,
+            color: *CORRECT_WORD_COLOR,
             font_id: gfx_window.fonts.roboto_font_id,
             scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
             bounds: self.input_pos_and_bounds.bounds.into(),
@@ -377,7 +377,7 @@ impl Screen for TestScreen {
                 scale: Scale::uniform((self.timer_font_size * gfx_window.dpi) as f32),
                 bounds: self.timer_pos_and_bounds.bounds.into(),
                 screen_position: self.timer_pos_and_bounds.center_point().into(),
-                color: WHITE,
+                color: *TIMER_COLOR,
                 layout: layout,
                 ..Section::default()
             };
