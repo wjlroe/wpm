@@ -25,12 +25,10 @@ impl TypingState {
     pub fn skip_num(&self) -> usize {
         if self.animation.is_some() {
             self.word_idx_at_prev_line
+        } else if self.word_idx_at_start_of_line > 0 {
+            self.word_idx_at_start_of_line
         } else {
-            if self.word_idx_at_start_of_line > 0 {
-                self.word_idx_at_start_of_line
-            } else {
-                0
-            }
+            0
         }
     }
 
