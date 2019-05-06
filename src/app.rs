@@ -24,13 +24,13 @@ impl<'a> Default for App<'a> {
 
 impl<'a> App<'a> {
     pub fn new() -> Self {
-        let mut gfx_window = GfxWindow::new();
+        let mut gfx_window = GfxWindow::default();
         let screen = screens::TestScreen::new(&mut gfx_window);
         let bg_switch_label = Label::new(
-            32.0,
+            32.0, // FIXME: what font size?
             gfx_window.fonts.iosevka_font_id,
             VIOLET,
-            String::from("Switch BG color"),
+            String::from("Switch BG color"), // FIXME: icon instead?
             &mut gfx_window,
         );
         App {

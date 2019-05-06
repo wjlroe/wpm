@@ -27,14 +27,14 @@ pub struct GfxWindow<'a> {
 
 impl<'a> Default for GfxWindow<'a> {
     fn default() -> GfxWindow<'a> {
-        GfxWindow::new()
+        GfxWindow::new(768.0, 576.0)
     }
 }
 
 impl<'a> GfxWindow<'a> {
-    pub fn new() -> Self {
+    pub fn new(win_width: f64, win_height: f64) -> Self {
         let event_loop = EventsLoop::new();
-        let logical_size = LogicalSize::new(768.0, 576.0);
+        let logical_size = LogicalSize::new(win_width, win_height);
         let monitor = event_loop.get_primary_monitor();
         let dpi = monitor.get_hidpi_factor();
         let physical_size = logical_size.to_physical(dpi);
