@@ -323,7 +323,7 @@ impl Screen for TestScreen {
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
-        gfx_window.draw_outline(*INPUT_OUTLINE_COLOR, &self.input_pos_and_bounds, 0.8, 3.0);
+        gfx_window.draw_outline(INPUT_OUTLINE_COLOR, &self.input_pos_and_bounds, 0.8, 3.0);
         gfx_window.draw_quad(TRANSPARENT, &self.typing_mask_pos_and_bounds, 0.5);
         gfx_window.draw_outline(*TIMER_OUTLINE_COLOR, &self.timer_pos_and_bounds, 1.0, 3.0);
 
