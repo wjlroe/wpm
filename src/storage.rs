@@ -1,6 +1,5 @@
 use crate::*;
 use dirs::*;
-use lazy_static::*;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use rmp::*;
@@ -20,9 +19,8 @@ enum StorageVersions {
 
 pub const CURRENT_VERSION: i8 = StorageVersions::V2 as i8;
 
-lazy_static! {
-    pub static ref RESULTS_PATH: PathBuf =
-        config_dir().unwrap().join("wpm").join("typing_results.wpm");
+fn results_path() -> PathBuf {
+    config_dir().unwrap().join("wpm").join("typing_results.wpm")
 }
 
 #[derive(Default, Debug)]
@@ -65,7 +63,7 @@ fn read_results<R: Read>(rd: &mut R) -> Result<ReadTypingResults, Box<dyn Error>
 }
 
 pub fn read_results_from_file() -> Result<ReadTypingResults, Box<dyn Error>> {
-    match OpenOptions::new().read(true).open(RESULTS_PATH.as_path()) {
+    match OpenOptions::new().read(true).open(results_path().as_path()) {
         Err(ref error) if error.kind() == ErrorKind::NotFound => Ok(ReadTypingResults::default()),
         Err(error) => Err(error.into()),
         Ok(mut fd) => read_results(&mut fd),
@@ -78,14 +76,14 @@ fn save_result<W: Write>(wr: &mut W, typing_result: &TypingResult) -> Result<(),
 }
 
 pub fn save_result_to_file(typing_result: &TypingResult) -> Result<(), Box<dyn Error>> {
-    if let Some(dir_name) = RESULTS_PATH.parent() {
+    if let Some(dir_name) = results_path().parent() {
         DirBuilder::new().recursive(true).create(dir_name)?;
     }
     let mut fd = OpenOptions::new()
         .write(true)
         .create(true)
         .append(true)
-        .open(RESULTS_PATH.as_path())?;
+        .open(results_path().as_path())?;
     save_result(&mut fd, typing_result)
 }
 
