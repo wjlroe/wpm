@@ -49,7 +49,7 @@ impl ResultsListScreen {
             let datetime = if let Some(dt) = typing_result.datetime() {
                 format!("{}", dt.format("%H:%M %v"))
             } else {
-                format!("")
+                format!("?")
             };
             table_rows.push(vec![
                 Self::table_cell_label(datetime, gfx_window),
