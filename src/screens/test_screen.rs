@@ -202,7 +202,7 @@ impl TestScreen {
                         panic!("we are missing a glyph for this word!");
                     }
                 }
-                if glyph_y != current_y {
+                if (glyph_y - current_y).abs() >= std::f32::EPSILON {
                     self.typing_state.first_word_idx_per_line.push(word_idx);
                     if self.typing_state.per_line_height < 0.001 {
                         // TODO: if we calculate per_line_height here, we don't need to do that in the A\nA section above
