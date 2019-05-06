@@ -168,7 +168,7 @@ impl<'a> GfxWindow<'a> {
         let mut label = Label::new(
             UI_TEXT_BUTTON_SIZE,
             self.fonts.iosevka_font_id,
-            *TEXT_COLOR,
+            TEXT_COLOR,
             String::from("←"),
             self,
         );

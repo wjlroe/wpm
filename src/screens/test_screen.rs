@@ -28,7 +28,7 @@ impl TestScreen {
         let mut show_listing_label = Label::new(
             LISTING_BUTTON_FONT_SIZE,
             gfx_window.fonts.iosevka_font_id,
-            *TEXT_COLOR,
+            TEXT_COLOR,
             String::from("≡"),
             gfx_window,
         );

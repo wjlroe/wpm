@@ -30,7 +30,7 @@ fn table_header_label(text: String, gfx_window: &mut GfxWindow) -> Label {
     Label::new(
         HEADER_FONT_SIZE,
         gfx_window.fonts.roboto_font_id,
-        *TEXT_COLOR,
+        TEXT_COLOR,
         text,
         gfx_window,
     )
@@ -40,7 +40,7 @@ fn table_cell_label(text: String, gfx_window: &mut GfxWindow) -> Label {
     Label::new(
         ROW_FONT_SIZE,
         gfx_window.fonts.roboto_font_id,
-        *TEXT_COLOR,
+        TEXT_COLOR,
         text,
         gfx_window,
     )
@@ -109,7 +109,7 @@ impl ResultsListScreen {
             list_title: Label::new(
                 TITLE_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
-                *TEXT_COLOR,
+                TEXT_COLOR,
                 String::from("Typing speed results:"),
                 gfx_window,
             ),

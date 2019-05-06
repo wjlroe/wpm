@@ -149,7 +149,7 @@ impl TypingTest {
             let color = match correct_or_not {
                 Some(EnteredWord::Correct) => *CORRECT_WORD_COLOR,
                 Some(EnteredWord::Incorrect) => *INCORRECT_WORD_COLOR,
-                _ => *TEXT_COLOR,
+                _ => TEXT_COLOR,
             };
             sections.push(SectionText {
                 text: &word,
