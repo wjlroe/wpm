@@ -291,13 +291,13 @@ impl Screen for TestScreen {
         _mouse_position: Vector2<f32>,
         gfx_window: &mut GfxWindow,
     ) -> bool {
-        let mut needs_render = false;
-
-        if self.need_font_recalc {
+        let mut needs_render = if self.need_font_recalc {
             self.update_font_metrics(gfx_window);
             self.need_font_recalc = false;
-            needs_render = true;
-        }
+            true
+        } else {
+            false
+        };
 
         if !self.typing_test.ended {
             needs_render = true;
