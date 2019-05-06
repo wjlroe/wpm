@@ -1,7 +1,9 @@
 use crate::layout::ElementLayout;
 use crate::*;
 use cgmath::*;
-use gfx_glyph::{GlyphCruncher, HorizontalAlign, Layout, Scale, Section, VerticalAlign};
+use gfx_glyph::{
+    GlyphCruncher, HorizontalAlign, Layout, PositionedGlyph, Scale, Section, VerticalAlign,
+};
 use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use std::error::Error;
 use std::time::Duration;
@@ -188,7 +190,7 @@ impl TestScreen {
             };
             let mut glyph_iter = gfx_window.glyph_brush.glyphs(typed_section);
             let mut current_y = 0.0;
-            if let Some(glyph_position) = glyph_iter.next().map(|glyph| glyph.position()) {
+            if let Some(glyph_position) = glyph_iter.next().map(PositionedGlyph::position) {
                 current_y = glyph_position.y;
             }
 
@@ -196,7 +198,7 @@ impl TestScreen {
             for (word_idx, word) in self.typing_test.words.iter().enumerate() {
                 if word_idx > 0 {
                     // Get the first character/glyph for the word
-                    if let Some(glyph_position) = glyph_iter.next().map(|glyph| glyph.position()) {
+                    if let Some(glyph_position) = glyph_iter.next().map(PositionedGlyph::position) {
                         glyph_y = glyph_position.y;
                     } else {
                         panic!("we are missing a glyph for this word!");
