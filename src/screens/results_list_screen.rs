@@ -1,13 +1,27 @@
+use crate::layout::ElementLayout;
+use crate::screens;
 use crate::*;
 use cgmath::*;
+use gfx_glyph::{HorizontalAlign, Layout, VerticalAlign};
+use lazy_static::*;
 use std::error::Error;
 
 const TITLE_FONT_SIZE: f32 = 48.0;
 const HEADER_FONT_SIZE: f32 = 32.0;
 const ROW_FONT_SIZE: f32 = 32.0;
+const BACK_BUTTON_FONT_SIZE: f32 = 68.0;
+
+lazy_static! {
+    static ref LISTING_BUTTON_BG: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Violet)
+        .cloned()
+        .unwrap();
+}
 
 pub struct ResultsListScreen {
     need_font_recalc: bool,
+    back_label: Label,
+    go_back: bool,
     list_title: Label,
     table_headers: Vec<Label>,
     table_rows: Vec<Vec<Label>>,
@@ -59,8 +73,18 @@ impl ResultsListScreen {
                 Self::table_cell_label(format!("{}", typing_result.wpm), gfx_window),
             ]);
         }
+        let mut back_label = Label::new(
+            BACK_BUTTON_FONT_SIZE,
+            gfx_window.fonts.iosevka_font_id,
+            BLACK,
+            String::from("←"),
+            gfx_window,
+        );
+        back_label.rect.bounds.x *= 1.5;
         Self {
             need_font_recalc: true,
+            go_back: false,
+            back_label,
             list_title: Label::new(
                 TITLE_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
@@ -102,7 +126,7 @@ impl ResultsListScreen {
             .unwrap_or(0.0)
     }
 
-    fn update_font_metrics(&mut self, _gfx_window: &mut GfxWindow) {
+    fn update_font_metrics(&mut self, gfx_window: &mut GfxWindow) {
         let top_padding = 30.0;
         let padding_between_heading_and_table = 60.0;
         let left_padding = 15.0;
@@ -133,8 +157,14 @@ impl ResultsListScreen {
             })
             .unwrap_or(0.0);
 
+        self.back_label.rect.position.x = left_padding;
+        self.back_label.rect.position.y = top_padding;
+
+        let mut horizontal_layout = ElementLayout::horizontal(gfx_window.window_dim());
+        let list_title_elem = horizontal_layout.add_bounds(self.list_title.rect.bounds);
+        horizontal_layout.calc_positions();
+        self.list_title.rect.position = horizontal_layout.element_position(list_title_elem);
         self.list_title.rect.position.y = top_padding;
-        self.list_title.rect.position.x = left_padding;
 
         let top_of_table = top_padding + title_height + padding_between_heading_and_table;
         let inter_col_padding = 55.0;
@@ -162,12 +192,19 @@ impl ResultsListScreen {
 }
 
 impl Screen for ResultsListScreen {
-    fn maybe_change_to_screen(&self, _gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
-        None
+    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
+        if self.go_back {
+            Some(Box::new(screens::TestScreen::new(gfx_window)))
+        } else {
+            None
+        }
     }
 
-    fn mouse_click(&mut self, _position: Vector2<f32>) {
+    fn mouse_click(&mut self, position: Vector2<f32>) {
         // check if mouse is positioned over one of the results rows
+        if self.back_label.rect.contains_point(position) {
+            self.go_back = true;
+        }
     }
 
     fn update(
@@ -196,6 +233,16 @@ impl Screen for ResultsListScreen {
         gfx_window
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
+
+        gfx_window.draw_quad(*LISTING_BUTTON_BG, &self.back_label.rect, 1.0);
+
+        let mut back_section = self.back_label.section(gfx_window);
+        back_section.layout = Layout::default_single_line()
+            .v_align(VerticalAlign::Center)
+            .h_align(HorizontalAlign::Center);
+        back_section.bounds = self.back_label.rect.bounds.into();
+        back_section.screen_position = self.back_label.rect.center_point().into();
+        gfx_window.glyph_brush.queue(back_section);
 
         let mut title_section = self.list_title.section(gfx_window);
         title_section.bounds = self.list_title.rect.bounds.into();
