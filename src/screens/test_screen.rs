@@ -199,7 +199,7 @@ impl TestScreen {
                     if let Some(glyph_position) = glyph_iter.next().map(|glyph| glyph.position()) {
                         glyph_y = glyph_position.y;
                     } else {
-                        assert!(false, "we are missing a glyph for this word!");
+                        panic!("we are missing a glyph for this word!");
                     }
                 }
                 if glyph_y != current_y {
