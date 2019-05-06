@@ -40,19 +40,20 @@ impl ResultsListScreen {
             Err(_) => storage::ReadTypingResults::default(),
         };
         if read_typing_results.records_need_upgrading {
-            // do the upgrade
+            // TODO: do the record upgrade
         }
         let mut table_rows = Vec::new();
-        // FIXME: sort-by time reverse...
+        // TODO: sort-by time reverse...
         // TODO: Click on column to sort by that column
         for typing_result in read_typing_results.results {
+            let datetime = if let Some(dt) = typing_result.datetime() {
+                format!("{}", dt.format("%H:%M %v"))
+            } else {
+                format!("")
+            };
             table_rows.push(vec![
+                Self::table_cell_label(datetime, gfx_window),
                 Self::table_cell_label(format!("{}", typing_result.wpm), gfx_window),
-                Self::table_cell_label(format!("{}", typing_result.correct_words), gfx_window),
-                Self::table_cell_label(format!("{}", typing_result.incorrect_words), gfx_window),
-                Self::table_cell_label(format!("{}", typing_result.backspaces), gfx_window),
-                // FIXME: fix Date display - 0 is not valid!
-                Self::table_cell_label(format!("{}", typing_result.time), gfx_window),
             ]);
         }
         Self {
@@ -65,11 +66,8 @@ impl ResultsListScreen {
                 gfx_window,
             ),
             table_headers: vec![
-                Self::table_header_label(String::from("WPM"), gfx_window),
-                Self::table_header_label(String::from("Correct words"), gfx_window),
-                Self::table_header_label(String::from("Incorrect words"), gfx_window),
-                Self::table_header_label(String::from("Backspaces"), gfx_window),
                 Self::table_header_label(String::from("Date"), gfx_window),
+                Self::table_header_label(String::from("WPM"), gfx_window),
             ],
             table_rows,
         }
@@ -136,7 +134,7 @@ impl ResultsListScreen {
         self.list_title.rect.position.x = left_padding;
 
         let top_of_table = top_padding + title_height + padding_between_heading_and_table;
-        let inter_col_padding = 15.0;
+        let inter_col_padding = 55.0;
         let mut x_offset = left_padding;
         for (i, table_header) in self.table_headers.iter_mut().enumerate() {
             table_header.rect.position.y = top_of_table;
@@ -150,6 +148,7 @@ impl ResultsListScreen {
             let mut x_offset = left_padding;
             for (i, cell) in row.iter_mut().enumerate() {
                 cell.rect.position.y = y_offset;
+                // FIXME: way to right-align these within their column
                 cell.rect.position.x = x_offset;
                 x_offset += *col_widths.get(i).expect("Column width to exist!") + inter_col_padding;
             }
