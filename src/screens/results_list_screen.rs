@@ -104,7 +104,7 @@ impl ResultsListScreen {
 
     fn update_font_metrics(&mut self, _gfx_window: &mut GfxWindow) {
         let top_padding = 30.0;
-        let padding_between_heading_and_table = 20.0;
+        let padding_between_heading_and_table = 60.0;
         let left_padding = 15.0;
 
         let title_height = self.list_title.rect.bounds.y;
@@ -145,8 +145,9 @@ impl ResultsListScreen {
             x_offset += *col_widths.get(i).expect("Column width to exist!") + inter_col_padding;
         }
 
+        let gap_between_headers_and_rows = 20.0;
         let inter_row_padding = 5.0;
-        let mut y_offset = top_of_table + header_height;
+        let mut y_offset = top_of_table + header_height + gap_between_headers_and_rows;
         for row in self.table_rows.iter_mut() {
             let mut x_offset = left_padding;
             for (i, cell) in row.iter_mut().enumerate() {
