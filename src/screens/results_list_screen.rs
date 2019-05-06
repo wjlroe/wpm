@@ -9,6 +9,7 @@ use std::error::Error;
 const TITLE_FONT_SIZE: f32 = 48.0;
 const HEADER_FONT_SIZE: f32 = 32.0;
 const ROW_FONT_SIZE: f32 = 32.0;
+const TABLE_OUTLINE_WIDTH: f32 = 3.0;
 
 lazy_static! {
     static ref TABLE_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
@@ -224,8 +225,6 @@ impl ResultsListScreen {
         let top_of_table = top_padding + title_height + padding_between_heading_and_table;
         self.table_rect.position.y = top_of_table;
         self.table_rect.position.x = left_padding;
-        self.table_header_rect.position.y = top_of_table;
-        self.table_header_rect.position.x = left_padding;
         let inter_col_padding = 55.0;
         let mut x_offset = left_padding;
         for (i, table_header) in self.table_headers.iter_mut().enumerate() {
@@ -238,8 +237,6 @@ impl ResultsListScreen {
 
         self.table_rect.bounds.y += header_height;
         self.table_header_rect.bounds.y = header_height;
-        self.table_header_rect.bounds.x = self.table_rect.bounds.x;
-        self.table_rows_rect.bounds.x = self.table_rect.bounds.x;
 
         let gap_between_headers_and_rows = 20.0;
 
@@ -269,6 +266,17 @@ impl ResultsListScreen {
             self.table_rect.bounds.y += row_height;
             self.table_rows_rect.bounds.y += row_height;
         }
+
+        // grow the table_rect according to the outline width
+        self.table_rect.position.x -= 2.0 * TABLE_OUTLINE_WIDTH;
+        self.table_rect.position.y -= 2.0 * TABLE_OUTLINE_WIDTH;
+        self.table_rect.bounds.x += 2.0 * TABLE_OUTLINE_WIDTH;
+        self.table_rect.bounds.y += 2.0 * TABLE_OUTLINE_WIDTH;
+        self.table_header_rect.position.y = self.table_rect.position.y;
+        self.table_header_rect.position.x = self.table_rect.position.x;
+
+        self.table_header_rect.bounds.x = self.table_rect.bounds.x;
+        self.table_rows_rect.bounds.x = self.table_rect.bounds.x;
     }
 }
 
@@ -370,7 +378,12 @@ impl Screen for ResultsListScreen {
         header_underline_rect.position.y += header_underline_rect.bounds.y + 10.0;
         header_underline_rect.bounds.y = 3.0;
         gfx_window.draw_quad(*TABLE_HEADER_UNDERLINE, &header_underline_rect, 1.0);
-        gfx_window.draw_outline(*TABLE_OUTLINE_COLOR, &self.table_rect, 1.0 - 0.1, 3.0);
+        gfx_window.draw_outline(
+            *TABLE_OUTLINE_COLOR,
+            &self.table_rect,
+            1.0 - 0.1,
+            TABLE_OUTLINE_WIDTH,
+        );
         if let Some(highlighted_row_idx) = self.highlighted_row {
             if let Some(table_row) = self.table_rows.get(highlighted_row_idx) {
                 gfx_window.draw_quad(*ROW_HIGHLIGHT_BG, &table_row.row_rect, 1.0 - 0.3);
