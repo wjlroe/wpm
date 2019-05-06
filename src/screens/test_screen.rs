@@ -368,7 +368,7 @@ impl Screen for TestScreen {
                 scale: Scale::uniform((self.timer_font_size * gfx_window.dpi) as f32),
                 bounds: self.timer_pos_and_bounds.bounds.into(),
                 screen_position: self.timer_pos_and_bounds.center_point().into(),
-                color: *TIMER_COLOR,
+                color: TIMER_COLOR,
                 layout: layout,
                 ..Section::default()
             };
