@@ -26,28 +26,28 @@ gfx_defines! {
 }
 
 pub const QUAD: [Vertex; 4] = [
-    Vertex { pos: [-1.0, 1.0] },
-    Vertex { pos: [-1.0, -1.0] },
-    Vertex { pos: [1.0, -1.0] },
-    Vertex { pos: [1.0, 1.0] },
+  Vertex { pos: [-1.0, 1.0] },
+  Vertex { pos: [-1.0, -1.0] },
+  Vertex { pos: [1.0, -1.0] },
+  Vertex { pos: [1.0, 1.0] },
 ];
 pub const QUAD_INDICES: [u16; 6] = [0u16, 1, 2, 2, 3, 0];
 
 pub fn draw_quad<R: Resources, C: CommandBuffer<R>>(
-    quad_bundle: &mut Bundle<R, pipe::Data<R>>,
-    rect: &rect::Rect,
-    color: [f32; 4],
-    z: f32,
-    window_dim: Vector2<f32>,
-    encoder: &mut Encoder<R, C>,
+  quad_bundle: &mut Bundle<R, pipe::Data<R>>,
+  rect: &rect::Rect,
+  color: [f32; 4],
+  z: f32,
+  window_dim: Vector2<f32>,
+  encoder: &mut Encoder<R, C>,
 ) {
-    let transform = rect.as_matrix_within_window(window_dim);
+  let transform = rect.as_matrix_within_window(window_dim);
 
-    let locals = Locals {
-        color,
-        transform: transform.into(),
-        z: z,
-    };
-    encoder.update_constant_buffer(&quad_bundle.data.locals, &locals);
-    quad_bundle.encode(encoder);
+  let locals = Locals {
+    color,
+    transform: transform.into(),
+    z,
+  };
+  encoder.update_constant_buffer(&quad_bundle.data.locals, &locals);
+  quad_bundle.encode(encoder);
 }

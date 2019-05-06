@@ -371,7 +371,7 @@ impl Screen for TestScreen {
                 bounds: self.timer_pos_and_bounds.bounds.into(),
                 screen_position: self.timer_pos_and_bounds.center_point().into(),
                 color: TIMER_COLOR,
-                layout: layout,
+                layout,
                 ..Section::default()
             };
             gfx_window.glyph_brush.queue(time_section);
