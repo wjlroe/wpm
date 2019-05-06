@@ -45,7 +45,7 @@ impl TableRow {
         let datetime = if let Some(dt) = typing_result.datetime() {
             format!("{}", dt.format("%H:%M %v"))
         } else {
-            format!("?")
+            "?".to_string()
         };
         Self {
             typing_result,
