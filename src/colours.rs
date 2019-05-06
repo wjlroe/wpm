@@ -17,26 +17,6 @@ impl Default for BackgroundColor {
 
 pub type ColorArray = [f32; 4];
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
-pub enum SolarizedColor {
-    Base03,
-    Base02,
-    Base01,
-    Base00,
-    Base0,
-    Base1,
-    Base2,
-    Base3,
-    Yellow,
-    Orange,
-    Red,
-    Magenta,
-    Violet,
-    Blue,
-    Cyan,
-    Green,
-}
-
 macro_rules! color_array_from_rgb {
     ($red:expr, $green:expr, $blue:expr) => {
         [
