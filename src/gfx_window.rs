@@ -25,6 +25,12 @@ pub struct GfxWindow<'a> {
     pub encoder: Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
 }
 
+impl<'a> Default for GfxWindow<'a> {
+    fn default() -> GfxWindow<'a> {
+        GfxWindow::new()
+    }
+}
+
 impl<'a> GfxWindow<'a> {
     pub fn new() -> Self {
         let event_loop = EventsLoop::new();
