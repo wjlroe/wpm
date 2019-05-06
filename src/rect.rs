@@ -51,9 +51,7 @@ impl Rect {
             -2.0 * (self.position.y + self.bounds.y / 2.0 - window_dim.y / 2.0) / window_dim.y;
         let translation = Matrix4::from_translation(vec3(x_move, y_move, 0.0));
 
-        let transform = translation * scale; // scale then translate
-
-        transform
+        translation * scale // scale then translate
     }
 }
 
