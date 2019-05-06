@@ -1,5 +1,21 @@
 use lazy_static::*;
+use std::cell::RefCell;
 use std::collections::HashMap;
+
+pub enum BackgroundColor {
+    Light,
+    Dark,
+}
+
+const fn default_bg_color() -> BackgroundColor {
+    BackgroundColor::Light
+}
+
+impl Default for BackgroundColor {
+    fn default() -> Self {
+        default_bg_color()
+    }
+}
 
 pub type ColorArray = [f32; 4];
 
@@ -21,6 +37,56 @@ pub enum SolarizedColor {
     Blue,
     Cyan,
     Green,
+}
+
+macro_rules! color_array_from_rgb {
+    ($red:expr, $green:expr, $blue:expr) => {
+        [
+            $red as f32 / 255.0,
+            $green as f32 / 255.0,
+            $blue as f32 / 255.0,
+            1.0,
+        ]
+    };
+}
+
+pub const Base03: ColorArray = color_array_from_rgb!(0, 43, 54);
+pub const Base02: ColorArray = color_array_from_rgb!(7, 54, 66);
+pub const Base01: ColorArray = color_array_from_rgb!(88, 110, 117);
+pub const Base00: ColorArray = color_array_from_rgb!(101, 123, 131);
+pub const Base0: ColorArray = color_array_from_rgb!(131, 148, 150);
+pub const Base1: ColorArray = color_array_from_rgb!(147, 161, 161);
+pub const Base2: ColorArray = color_array_from_rgb!(238, 232, 213);
+pub const Base3: ColorArray = color_array_from_rgb!(253, 246, 227);
+pub const Yellow: ColorArray = color_array_from_rgb!(181, 137, 0);
+pub const Orange: ColorArray = color_array_from_rgb!(203, 75, 22);
+pub const Red: ColorArray = color_array_from_rgb!(220, 50, 47);
+pub const Magenta: ColorArray = color_array_from_rgb!(211, 54, 130);
+pub const Violet: ColorArray = color_array_from_rgb!(108, 113, 196);
+pub const Blue: ColorArray = color_array_from_rgb!(38, 139, 210);
+pub const Cyan: ColorArray = color_array_from_rgb!(42, 161, 152);
+pub const Green: ColorArray = color_array_from_rgb!(133, 153, 0);
+
+pub const LIGHT_BG_COLOR: ColorArray = Base3;
+pub const DARK_BG_COLOR: ColorArray = Base03;
+
+thread_local! {
+    pub static CURRENT_BG_COLOR: RefCell<BackgroundColor> = RefCell::new(default_bg_color());
+    pub static BG_COLOR: RefCell<ColorArray> = RefCell::new(LIGHT_BG_COLOR);
+}
+
+pub fn swap_colors() {
+    let (new_bg_color, new_current_bg_color) =
+        CURRENT_BG_COLOR.with(|current_bg_color| match *current_bg_color.borrow() {
+            BackgroundColor::Light => (DARK_BG_COLOR, BackgroundColor::Dark),
+            BackgroundColor::Dark => (LIGHT_BG_COLOR, BackgroundColor::Light),
+        });
+    BG_COLOR.with(|bg_color| *bg_color.borrow_mut() = new_bg_color);
+    CURRENT_BG_COLOR.with(|current_bg_color| *current_bg_color.borrow_mut() = new_current_bg_color);
+}
+
+pub fn bg_color() -> ColorArray {
+    BG_COLOR.with(|bg_color| *bg_color.borrow())
 }
 
 lazy_static! {
@@ -56,10 +122,6 @@ lazy_static! {
         }
         m
     };
-    pub static ref BG_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Base3)
-        .cloned()
-        .unwrap();
     pub static ref TEXT_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
         .get(&SolarizedColor::Base01)
         .cloned()

@@ -13,6 +13,7 @@ pub struct App<'a> {
     mouse_position: LogicalPosition,
     render_screen: bool,
     current_screen: Box<Screen>,
+    bg_switch_label: Label,
 }
 
 impl<'a> Default for App<'a> {
@@ -25,20 +26,47 @@ impl<'a> App<'a> {
     pub fn new() -> Self {
         let mut gfx_window = GfxWindow::new();
         let screen = screens::TestScreen::new(&mut gfx_window);
+        let bg_switch_label = Label::new(
+            32.0,
+            gfx_window.fonts.iosevka_font_id,
+            Violet,
+            String::from("Switch BG color"),
+            &mut gfx_window,
+        );
         App {
             running: true,
             gfx_window,
             mouse_position: LogicalPosition::new(0.0, 0.0),
             render_screen: true,
             current_screen: Box::new(screen),
+            bg_switch_label,
         }
+    }
+
+    fn recalc_label_positions(&mut self) {
+        // position bg_switch_label at the bottom of the screen
+        let border_size = 35.0;
+        let (win_width, win_height) = self.gfx_window.window_dim().into();
+        self.bg_switch_label.rect.position.x =
+            win_width - self.bg_switch_label.rect.bounds.x - border_size;
+        self.bg_switch_label.rect.position.y =
+            win_height - self.bg_switch_label.rect.bounds.y - border_size;
     }
 
     fn window_resized(&mut self, dt: f32) {
         self.gfx_window.resize();
         self.current_screen.window_resized(&mut self.gfx_window);
+        self.recalc_label_positions();
         self.render_screen = true;
         let _ = self.render(dt);
+    }
+
+    fn mouse_click(&mut self, position: Vector2<f32>) {
+        self.current_screen.mouse_click(position);
+
+        if self.bg_switch_label.rect.contains_point(position) {
+            swap_colors();
+        }
     }
 
     fn process_events(&mut self, dt: f32) {
@@ -71,8 +99,7 @@ impl<'a> App<'a> {
                         ..
                     } => {
                         let physical_mouse = self.mouse_position.to_physical(self.gfx_window.dpi);
-                        self.current_screen
-                            .mouse_click(vec2(physical_mouse.x as f32, physical_mouse.y as f32));
+                        self.mouse_click(vec2(physical_mouse.x as f32, physical_mouse.y as f32));
                     }
                     _ => {}
                 },
@@ -104,6 +131,19 @@ impl<'a> App<'a> {
 
     fn render(&mut self, dt: f32) -> Result<(), Box<dyn Error>> {
         self.current_screen.render(dt, &mut self.gfx_window)?;
+
+        {
+            let mut switch_section = self.bg_switch_label.section(&mut self.gfx_window);
+            switch_section.bounds = self.bg_switch_label.rect.bounds.into();
+            switch_section.screen_position = self.bg_switch_label.rect.position.into();
+            self.gfx_window.glyph_brush.queue(switch_section);
+            self.gfx_window.glyph_brush.draw_queued(
+                &mut self.gfx_window.encoder,
+                &self.gfx_window.quad_bundle.data.out_color,
+                &self.gfx_window.quad_bundle.data.out_depth,
+            )?;
+        }
+
         self.gfx_window.end_frame()?;
         Ok(())
     }

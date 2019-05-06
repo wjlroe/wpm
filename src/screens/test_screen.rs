@@ -318,7 +318,7 @@ impl Screen for TestScreen {
     fn render(&self, _dt: f32, gfx_window: &mut GfxWindow) -> Result<(), Box<dyn Error>> {
         gfx_window
             .encoder
-            .clear(&gfx_window.quad_bundle.data.out_color, *BG_COLOR);
+            .clear(&gfx_window.quad_bundle.data.out_color, bg_color());
         gfx_window
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
