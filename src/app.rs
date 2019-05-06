@@ -23,13 +23,14 @@ impl<'a> Default for App<'a> {
 
 impl<'a> App<'a> {
     pub fn new() -> Self {
-        let gfx_window = GfxWindow::new();
+        let mut gfx_window = GfxWindow::new();
+        let screen = screens::TestScreen::new(&mut gfx_window);
         App {
             running: true,
             gfx_window,
             mouse_position: LogicalPosition::new(0.0, 0.0),
             render_screen: true,
-            current_screen: Box::new(screens::TestScreen::new()),
+            current_screen: Box::new(screen),
         }
     }
 
@@ -82,7 +83,12 @@ impl<'a> App<'a> {
     }
 
     fn update(&mut self, dt: f32) {
-        self.render_screen = self.current_screen.update(dt, &mut self.gfx_window);
+        let physical_mouse = self.mouse_position.to_physical(self.gfx_window.dpi);
+        self.render_screen = self.current_screen.update(
+            dt,
+            vec2(physical_mouse.x as f32, physical_mouse.y as f32),
+            &mut self.gfx_window,
+        );
 
         if let Some(new_screen) = self
             .current_screen
