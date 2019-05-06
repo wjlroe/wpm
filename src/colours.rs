@@ -68,6 +68,7 @@ pub const CYAN: ColorArray = color_array_from_rgb!(42, 161, 152);
 pub const GREEN: ColorArray = color_array_from_rgb!(133, 153, 0);
 
 pub const TEXT_COLOR: ColorArray = BASE01;
+pub const CORRECT_WORD_COLOR: ColorArray = GREEN;
 
 pub const LIGHT_BG_COLOR: ColorArray = BASE3;
 pub const DARK_BG_COLOR: ColorArray = BASE03;
@@ -124,10 +125,6 @@ lazy_static! {
         }
         m
     };
-    pub static ref CORRECT_WORD_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Green)
-        .cloned()
-        .unwrap();
     pub static ref INCORRECT_WORD_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
         .get(&SolarizedColor::Red)
         .cloned()

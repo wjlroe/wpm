@@ -347,7 +347,7 @@ impl Screen for TestScreen {
         let input_layout = Layout::default_single_line().v_align(VerticalAlign::Center);
         let input_section = Section {
             text: &self.typing_test.entered_text,
-            color: *CORRECT_WORD_COLOR,
+            color: CORRECT_WORD_COLOR,
             font_id: gfx_window.fonts.roboto_font_id,
             scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
             bounds: self.input_pos_and_bounds.bounds.into(),

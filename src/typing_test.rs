@@ -147,7 +147,7 @@ impl TypingTest {
         for (word_idx, word) in self.words.iter().enumerate().skip(skip_num) {
             let correct_or_not = self.words_entered.get(word_idx);
             let color = match correct_or_not {
-                Some(EnteredWord::Correct) => *CORRECT_WORD_COLOR,
+                Some(EnteredWord::Correct) => CORRECT_WORD_COLOR,
                 Some(EnteredWord::Incorrect) => *INCORRECT_WORD_COLOR,
                 _ => TEXT_COLOR,
             };
