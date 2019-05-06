@@ -122,10 +122,8 @@ impl<'a> App<'a> {
             .maybe_change_to_screen(&mut self.gfx_window)
         {
             self.current_screen = new_screen
-        } else {
-            if !self.render_screen {
-                thread::sleep(Duration::from_millis(100));
-            }
+        } else if !self.render_screen {
+            thread::sleep(Duration::from_millis(100));
         }
     }
 
