@@ -71,6 +71,7 @@ pub const TEXT_COLOR: ColorArray = BASE01;
 pub const CORRECT_WORD_COLOR: ColorArray = GREEN;
 pub const INCORRECT_WORD_COLOR: ColorArray = RED;
 pub const INPUT_OUTLINE_COLOR: ColorArray = MAGENTA;
+pub const TIMER_OUTLINE_COLOR: ColorArray = CYAN;
 
 pub const LIGHT_BG_COLOR: ColorArray = BASE3;
 pub const DARK_BG_COLOR: ColorArray = BASE03;
@@ -127,10 +128,6 @@ lazy_static! {
         }
         m
     };
-    pub static ref TIMER_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Cyan)
-        .cloned()
-        .unwrap();
     pub static ref TIMER_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
         .get(&SolarizedColor::Violet)
         .cloned()
