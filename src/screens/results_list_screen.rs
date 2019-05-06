@@ -3,6 +3,7 @@ use crate::screens;
 use crate::*;
 use cgmath::*;
 use gfx_glyph::{HorizontalAlign, Layout, VerticalAlign};
+use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use lazy_static::*;
 use std::error::Error;
 
@@ -16,6 +17,66 @@ lazy_static! {
         .get(&SolarizedColor::Violet)
         .cloned()
         .unwrap();
+    static ref TABLE_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Magenta)
+        .cloned()
+        .unwrap();
+    static ref TABLE_HEADER_BG: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Base03)
+        .cloned()
+        .unwrap();
+    static ref TABLE_ROW_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Cyan)
+        .cloned()
+        .unwrap();
+    static ref ROW_HIGHLIGHT_BG: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Yellow)
+        .cloned()
+        .unwrap();
+}
+
+fn table_header_label(text: String, gfx_window: &mut GfxWindow) -> Label {
+    Label::new(
+        HEADER_FONT_SIZE,
+        gfx_window.fonts.roboto_font_id,
+        BLACK,
+        text,
+        gfx_window,
+    )
+}
+
+fn table_cell_label(text: String, gfx_window: &mut GfxWindow) -> Label {
+    Label::new(
+        ROW_FONT_SIZE,
+        gfx_window.fonts.roboto_font_id,
+        BLACK,
+        text,
+        gfx_window,
+    )
+}
+
+struct TableRow {
+    cells: Vec<Label>,
+    row_rect: Rect,
+    typing_result: TypingResult,
+}
+
+impl TableRow {
+    fn new(gfx_window: &mut GfxWindow, typing_result: TypingResult) -> Self {
+        let datetime = if let Some(dt) = typing_result.datetime() {
+            format!("{}", dt.format("%H:%M %v"))
+        } else {
+            format!("?")
+        };
+        Self {
+            typing_result,
+            cells: vec![
+                table_cell_label(datetime, gfx_window),
+                table_cell_label(format!("{}", typing_result.wpm), gfx_window),
+            ],
+            row_rect: Rect::default(),
+        }
+    }
 }
 
 pub struct ResultsListScreen {
@@ -24,30 +85,15 @@ pub struct ResultsListScreen {
     go_back: bool,
     list_title: Label,
     table_headers: Vec<Label>,
-    table_rows: Vec<Vec<Label>>,
+    table_rows: Vec<TableRow>,
+    table_rect: Rect,
+    table_header_rect: Rect,
+    table_rows_rect: Rect,
+    highlighted_row: Option<usize>,
+    goto_row: Option<usize>,
 }
 
 impl ResultsListScreen {
-    fn table_header_label(text: String, gfx_window: &mut GfxWindow) -> Label {
-        Label::new(
-            HEADER_FONT_SIZE,
-            gfx_window.fonts.roboto_font_id,
-            BLACK,
-            text,
-            gfx_window,
-        )
-    }
-
-    fn table_cell_label(text: String, gfx_window: &mut GfxWindow) -> Label {
-        Label::new(
-            ROW_FONT_SIZE,
-            gfx_window.fonts.roboto_font_id,
-            BLACK,
-            text,
-            gfx_window,
-        )
-    }
-
     pub fn new(gfx_window: &mut GfxWindow) -> Self {
         let mut read_typing_results = match storage::read_results_from_file() {
             Ok(results) => results,
@@ -63,15 +109,7 @@ impl ResultsListScreen {
             .results
             .sort_unstable_by_key(|result| -(result.time as i64));
         for typing_result in read_typing_results.results {
-            let datetime = if let Some(dt) = typing_result.datetime() {
-                format!("{}", dt.format("%H:%M %v"))
-            } else {
-                format!("?")
-            };
-            table_rows.push(vec![
-                Self::table_cell_label(datetime, gfx_window),
-                Self::table_cell_label(format!("{}", typing_result.wpm), gfx_window),
-            ]);
+            table_rows.push(TableRow::new(gfx_window, typing_result));
         }
         let mut back_label = Label::new(
             BACK_BUTTON_FONT_SIZE,
@@ -89,14 +127,48 @@ impl ResultsListScreen {
                 TITLE_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
                 BLACK,
-                String::from("Previous typing speed results:"),
+                String::from("Typing speed results:"),
                 gfx_window,
             ),
             table_headers: vec![
-                Self::table_header_label(String::from("Date"), gfx_window),
-                Self::table_header_label(String::from("WPM"), gfx_window),
+                table_header_label(String::from("Date"), gfx_window),
+                table_header_label(String::from("WPM"), gfx_window),
             ],
             table_rows,
+            table_rect: Rect::default(),
+            table_header_rect: Rect::default(),
+            table_rows_rect: Rect::default(),
+            highlighted_row: None,
+            goto_row: None,
+        }
+    }
+
+    fn move_highlight(&mut self, amount: i32) {
+        let num_rows = self.table_rows.len() as i32;
+        if num_rows == 0 {
+            return;
+        }
+        let last_row = num_rows - 1;
+        if self.highlighted_row.is_none() {
+            if amount > 0 {
+                self.highlighted_row = Some(0);
+            } else {
+                self.highlighted_row = Some(last_row as usize); // FIXME: last row
+            }
+        } else {
+            let mut new_row = self.highlighted_row.unwrap() as i32 + amount;
+            new_row %= num_rows;
+            if new_row < 0 {
+                new_row += num_rows;
+            }
+            self.highlighted_row = Some(new_row as usize);
+        }
+        assert!(self.highlighted_row.unwrap() < self.table_rows.len());
+    }
+
+    fn select_row(&mut self) {
+        if let Some(row) = self.highlighted_row {
+            self.goto_row = Some(row);
         }
     }
 
@@ -104,7 +176,7 @@ impl ResultsListScreen {
         let widest_col_width = self
             .table_rows
             .iter()
-            .map(|row| row[col].rect.bounds.x)
+            .map(|row| row.cells[col].rect.bounds.x)
             .max_by(|width_a, width_b| {
                 width_a
                     .partial_cmp(width_b)
@@ -116,6 +188,7 @@ impl ResultsListScreen {
 
     fn row_height(&self, row: usize) -> f32 {
         self.table_rows[row]
+            .cells
             .iter()
             .map(|cell| cell.rect.bounds.y)
             .max_by(|height_a, height_b| {
@@ -167,26 +240,52 @@ impl ResultsListScreen {
         self.list_title.rect.position.y = top_padding;
 
         let top_of_table = top_padding + title_height + padding_between_heading_and_table;
+        self.table_rect.position.y = top_of_table;
+        self.table_rect.position.x = left_padding;
+        self.table_header_rect.position.y = top_of_table;
+        self.table_header_rect.position.x = left_padding;
         let inter_col_padding = 55.0;
         let mut x_offset = left_padding;
         for (i, table_header) in self.table_headers.iter_mut().enumerate() {
             table_header.rect.position.y = top_of_table;
             table_header.rect.position.x = x_offset;
-            x_offset += *col_widths.get(i).expect("Column width to exist!") + inter_col_padding;
+            let col_width = *col_widths.get(i).expect("Column width to exist!") + inter_col_padding;
+            x_offset += col_width;
+            self.table_rect.bounds.x += col_width;
         }
 
+        self.table_rect.bounds.y += header_height;
+        self.table_header_rect.bounds.y = header_height;
+        self.table_header_rect.bounds.x = self.table_rect.bounds.x;
+        self.table_rows_rect.bounds.x = self.table_rect.bounds.x;
+
         let gap_between_headers_and_rows = 20.0;
+
+        self.table_rect.bounds.y += gap_between_headers_and_rows;
+        self.table_rows_rect.position.y =
+            top_of_table + header_height + gap_between_headers_and_rows;
+        self.table_rows_rect.position.x = left_padding;
+
         let inter_row_padding = 5.0;
+        let row_height = max_row_height + inter_row_padding;
         let mut y_offset = top_of_table + header_height + gap_between_headers_and_rows;
-        for row in self.table_rows.iter_mut() {
+        for table_row in self.table_rows.iter_mut() {
             let mut x_offset = left_padding;
-            for (i, cell) in row.iter_mut().enumerate() {
-                cell.rect.position.y = y_offset;
+            table_row.row_rect.position.x = x_offset;
+            table_row.row_rect.position.y = y_offset;
+            table_row.row_rect.bounds.y = row_height;
+            for (i, cell) in table_row.cells.iter_mut().enumerate() {
                 // FIXME: way to right-align these within their column
                 cell.rect.position.x = x_offset;
-                x_offset += *col_widths.get(i).expect("Column width to exist!") + inter_col_padding;
+                cell.rect.position.y = y_offset;
+                let cell_width =
+                    *col_widths.get(i).expect("Column width to exist!") + inter_col_padding;
+                x_offset += cell_width;
+                table_row.row_rect.bounds.x += cell_width;
             }
-            y_offset += max_row_height + inter_row_padding;
+            y_offset += row_height;
+            self.table_rect.bounds.y += row_height;
+            self.table_rows_rect.bounds.y += row_height;
         }
     }
 }
@@ -195,6 +294,15 @@ impl Screen for ResultsListScreen {
     fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
         if self.go_back {
             Some(Box::new(screens::TestScreen::new(gfx_window)))
+        } else if let Some(goto_row) = self.goto_row {
+            if let Some(table_row) = self.table_rows.get(goto_row) {
+                Some(Box::new(screens::ResultsScreen::new(
+                    table_row.typing_result,
+                    gfx_window,
+                )))
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -204,6 +312,48 @@ impl Screen for ResultsListScreen {
         // check if mouse is positioned over one of the results rows
         if self.back_label.rect.contains_point(position) {
             self.go_back = true;
+        }
+
+        // if mouse within left/right of table (top/bottom?)
+        if self.table_rect.contains_point(position) {
+            // find the header
+            // find the row
+        }
+    }
+
+    fn process_events(&mut self, _dt: f32, events: &[Event]) {
+        for event in events.iter() {
+            if let Event::WindowEvent {
+                event: win_event, ..
+            } = event
+            {
+                match win_event {
+                    WindowEvent::KeyboardInput {
+                        input: keyboard_input,
+                        ..
+                    } => match keyboard_input {
+                        KeyboardInput {
+                            state: ElementState::Pressed,
+                            modifiers,
+                            virtual_keycode,
+                            ..
+                        } => {
+                            if *modifiers == NO_MODS {
+                                if let Some(virtual_keycode) = *virtual_keycode {
+                                    match virtual_keycode {
+                                        VirtualKeyCode::Down => self.move_highlight(1),
+                                        VirtualKeyCode::Up => self.move_highlight(-1),
+                                        VirtualKeyCode::Return => self.select_row(),
+                                        _ => {}
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    },
+                    _ => {}
+                }
+            }
         }
     }
 
@@ -235,6 +385,19 @@ impl Screen for ResultsListScreen {
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
         gfx_window.draw_quad(*LISTING_BUTTON_BG, &self.back_label.rect, 1.0);
+        gfx_window.draw_quad(*TABLE_HEADER_BG, &self.table_header_rect, 1.0);
+        gfx_window.draw_outline(*TABLE_OUTLINE_COLOR, &self.table_rect, 1.0 - 0.1, 3.0);
+        gfx_window.draw_outline(
+            *TABLE_ROW_OUTLINE_COLOR,
+            &self.table_rows_rect,
+            1.0 - 0.2,
+            3.0,
+        );
+        if let Some(highlighted_row_idx) = self.highlighted_row {
+            if let Some(table_row) = self.table_rows.get(highlighted_row_idx) {
+                gfx_window.draw_quad(*ROW_HIGHLIGHT_BG, &table_row.row_rect, 1.0 - 0.3);
+            }
+        }
 
         let mut back_section = self.back_label.section(gfx_window);
         back_section.layout = Layout::default_single_line()
@@ -257,7 +420,7 @@ impl Screen for ResultsListScreen {
         }
 
         for row in &self.table_rows {
-            for label in row {
+            for label in &row.cells {
                 let mut section = label.section(gfx_window);
                 section.bounds = label.rect.bounds.into();
                 section.screen_position = label.rect.position.into();
