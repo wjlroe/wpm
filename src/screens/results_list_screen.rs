@@ -2,7 +2,6 @@ use crate::layout::ElementLayout;
 use crate::screens;
 use crate::*;
 use cgmath::*;
-use gfx_glyph::{HorizontalAlign, Layout, VerticalAlign};
 use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use lazy_static::*;
 use std::error::Error;
@@ -10,27 +9,18 @@ use std::error::Error;
 const TITLE_FONT_SIZE: f32 = 48.0;
 const HEADER_FONT_SIZE: f32 = 32.0;
 const ROW_FONT_SIZE: f32 = 32.0;
-const BACK_BUTTON_FONT_SIZE: f32 = 68.0;
 
 lazy_static! {
-    static ref LISTING_BUTTON_BG: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Violet)
-        .cloned()
-        .unwrap();
     static ref TABLE_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
         .get(&SolarizedColor::Magenta)
         .cloned()
         .unwrap();
-    static ref TABLE_HEADER_BG: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Base03)
-        .cloned()
-        .unwrap();
-    static ref TABLE_ROW_OUTLINE_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Cyan)
-        .cloned()
-        .unwrap();
     static ref ROW_HIGHLIGHT_BG: [f32; 4] = SOLARIZED_COLOR_MAP
         .get(&SolarizedColor::Yellow)
+        .cloned()
+        .unwrap();
+    static ref TABLE_HEADER_UNDERLINE: [f32; 4] = SOLARIZED_COLOR_MAP
+        .get(&SolarizedColor::Magenta)
         .cloned()
         .unwrap();
 }
@@ -39,7 +29,7 @@ fn table_header_label(text: String, gfx_window: &mut GfxWindow) -> Label {
     Label::new(
         HEADER_FONT_SIZE,
         gfx_window.fonts.roboto_font_id,
-        BLACK,
+        *TEXT_COLOR,
         text,
         gfx_window,
     )
@@ -49,7 +39,7 @@ fn table_cell_label(text: String, gfx_window: &mut GfxWindow) -> Label {
     Label::new(
         ROW_FONT_SIZE,
         gfx_window.fonts.roboto_font_id,
-        BLACK,
+        *TEXT_COLOR,
         text,
         gfx_window,
     )
@@ -111,22 +101,14 @@ impl ResultsListScreen {
         for typing_result in read_typing_results.results {
             table_rows.push(TableRow::new(gfx_window, typing_result));
         }
-        let mut back_label = Label::new(
-            BACK_BUTTON_FONT_SIZE,
-            gfx_window.fonts.iosevka_font_id,
-            BLACK,
-            String::from("←"),
-            gfx_window,
-        );
-        back_label.rect.bounds.x *= 1.5;
         Self {
             need_font_recalc: true,
             go_back: false,
-            back_label,
+            back_label: gfx_window.back_label(),
             list_title: Label::new(
                 TITLE_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 String::from("Typing speed results:"),
                 gfx_window,
             ),
@@ -384,28 +366,18 @@ impl Screen for ResultsListScreen {
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
-        gfx_window.draw_quad(*LISTING_BUTTON_BG, &self.back_label.rect, 1.0);
-        gfx_window.draw_quad(*TABLE_HEADER_BG, &self.table_header_rect, 1.0);
+        let mut header_underline_rect = self.table_header_rect;
+        header_underline_rect.position.y += header_underline_rect.bounds.y + 10.0;
+        header_underline_rect.bounds.y = 3.0;
+        gfx_window.draw_quad(*TABLE_HEADER_UNDERLINE, &header_underline_rect, 1.0);
         gfx_window.draw_outline(*TABLE_OUTLINE_COLOR, &self.table_rect, 1.0 - 0.1, 3.0);
-        gfx_window.draw_outline(
-            *TABLE_ROW_OUTLINE_COLOR,
-            &self.table_rows_rect,
-            1.0 - 0.2,
-            3.0,
-        );
         if let Some(highlighted_row_idx) = self.highlighted_row {
             if let Some(table_row) = self.table_rows.get(highlighted_row_idx) {
                 gfx_window.draw_quad(*ROW_HIGHLIGHT_BG, &table_row.row_rect, 1.0 - 0.3);
             }
         }
 
-        let mut back_section = self.back_label.section(gfx_window);
-        back_section.layout = Layout::default_single_line()
-            .v_align(VerticalAlign::Center)
-            .h_align(HorizontalAlign::Center);
-        back_section.bounds = self.back_label.rect.bounds.into();
-        back_section.screen_position = self.back_label.rect.center_point().into();
-        gfx_window.glyph_brush.queue(back_section);
+        gfx_window.queue_ui_label(&self.back_label);
 
         let mut title_section = self.list_title.section(gfx_window);
         title_section.bounds = self.list_title.rect.bounds.into();

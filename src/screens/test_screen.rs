@@ -3,18 +3,10 @@ use crate::*;
 use cgmath::*;
 use gfx_glyph::{GlyphCruncher, HorizontalAlign, Layout, Scale, Section, VerticalAlign};
 use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
-use lazy_static::*;
 use std::error::Error;
 use std::time::Duration;
 
 const LISTING_BUTTON_FONT_SIZE: f32 = 68.0;
-
-lazy_static! {
-    static ref LISTING_BUTTON_BG: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Violet)
-        .cloned()
-        .unwrap();
-}
 
 #[derive(Default)]
 pub struct TestScreen {
@@ -36,7 +28,7 @@ impl TestScreen {
         let mut show_listing_label = Label::new(
             LISTING_BUTTON_FONT_SIZE,
             gfx_window.fonts.iosevka_font_id,
-            BLACK,
+            *TEXT_COLOR,
             String::from("≡"),
             gfx_window,
         );
@@ -334,7 +326,6 @@ impl Screen for TestScreen {
         gfx_window.draw_outline(*INPUT_OUTLINE_COLOR, &self.input_pos_and_bounds, 0.8, 3.0);
         gfx_window.draw_quad(TRANSPARENT, &self.typing_mask_pos_and_bounds, 0.5);
         gfx_window.draw_outline(*TIMER_OUTLINE_COLOR, &self.timer_pos_and_bounds, 1.0, 3.0);
-        gfx_window.draw_quad(*LISTING_BUTTON_BG, &self.show_listing_label.rect, 1.0);
 
         let skip_num = self.typing_state.skip_num();
         let typed_section = self.typing_test.words_as_varied_section(

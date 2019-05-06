@@ -163,4 +163,26 @@ impl<'a> GfxWindow<'a> {
             &mut self.encoder,
         );
     }
+
+    pub fn back_label(&mut self) -> Label {
+        let mut label = Label::new(
+            UI_TEXT_BUTTON_SIZE,
+            self.fonts.iosevka_font_id,
+            *TEXT_COLOR,
+            String::from("←"),
+            self,
+        );
+        label.rect.bounds.x *= 1.5;
+        label
+    }
+
+    pub fn queue_ui_label(&mut self, label: &Label) {
+        let mut ui_section = label.section(self);
+        ui_section.layout = Layout::default_single_line()
+            .v_align(VerticalAlign::Center)
+            .h_align(HorizontalAlign::Center);
+        ui_section.bounds = label.rect.bounds.into();
+        ui_section.screen_position = label.rect.center_point().into();
+        self.glyph_brush.queue(ui_section);
+    }
 }

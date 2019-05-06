@@ -2,21 +2,11 @@ use crate::layout::ElementLayout;
 use crate::screens;
 use crate::*;
 use cgmath::*;
-use lazy_static::*;
 use std::error::Error;
-
-lazy_static! {
-    static ref RESULT_BG: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Magenta)
-        .cloned()
-        .unwrap();
-}
 
 const NORMAL_LABEL_FONT_SIZE: f32 = 32.0;
 const HEADLINE_LABEL_FONT_SIZE: f32 = 48.0;
 const HEADLINE_VALUE_FONT_SIZE: f32 = 48.0;
-
-static mut HAVE_PRINTED_SECTIONS: bool = false;
 
 #[derive(Default)]
 pub struct ResultsScreen {
@@ -41,66 +31,60 @@ impl ResultsScreen {
             wpm_label: Label::new(
                 HEADLINE_LABEL_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 String::from("Words per minute"),
                 gfx_window,
             ),
             wpm_value: Label::new(
                 HEADLINE_VALUE_FONT_SIZE,
                 gfx_window.fonts.iosevka_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 format!("{}", typing_result.wpm),
                 gfx_window,
             ),
             correct_label: Label::new(
                 NORMAL_LABEL_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 String::from("Correct words"),
                 gfx_window,
             ),
             correct_value: Label::new(
                 NORMAL_LABEL_FONT_SIZE,
                 gfx_window.fonts.iosevka_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 format!("{}", typing_result.correct_words),
                 gfx_window,
             ),
             incorrect_label: Label::new(
                 NORMAL_LABEL_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 String::from("Incorrect words"),
                 gfx_window,
             ),
             incorrect_value: Label::new(
                 NORMAL_LABEL_FONT_SIZE,
                 gfx_window.fonts.iosevka_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 format!("{}", typing_result.incorrect_words),
                 gfx_window,
             ),
             backspaces_label: Label::new(
                 NORMAL_LABEL_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 String::from("Backspaces"),
                 gfx_window,
             ),
             backspaces_value: Label::new(
                 NORMAL_LABEL_FONT_SIZE,
                 gfx_window.fonts.iosevka_font_id,
-                BLACK,
+                *TEXT_COLOR,
                 format!("{}", typing_result.backspaces),
                 gfx_window,
             ),
-            back_label: Label::new(
-                NORMAL_LABEL_FONT_SIZE,
-                gfx_window.fonts.roboto_font_id,
-                BLACK,
-                String::from("< Back"),
-                gfx_window,
-            ),
+            back_label: gfx_window.back_label(),
         }
     }
 
@@ -251,6 +235,8 @@ impl Screen for ResultsScreen {
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
+        gfx_window.queue_ui_label(&self.back_label);
+
         let labels = vec![
             &self.wpm_label,
             &self.wpm_value,
@@ -260,7 +246,6 @@ impl Screen for ResultsScreen {
             &self.incorrect_value,
             &self.backspaces_label,
             &self.backspaces_value,
-            &self.back_label,
         ];
         let mut quad_color = [1.0, 1.0, 1.0, 1.0];
         let mut outline_color = [128.0 / 256.0, 0.0, 128.0 / 156.0, 1.0];
@@ -268,11 +253,6 @@ impl Screen for ResultsScreen {
             let mut section = label.section(gfx_window);
             section.bounds = label.rect.bounds.into();
             section.screen_position = label.rect.position.into();
-            unsafe {
-                if !HAVE_PRINTED_SECTIONS {
-                    println!("{:?}", section);
-                }
-            }
             quad_color[0] -= 0.1;
             quad_color[1] -= 0.1;
             quad_color[2] -= 0.1;
@@ -281,11 +261,6 @@ impl Screen for ResultsScreen {
             gfx_window.draw_quad(quad_color, &label.rect, 1.0);
             gfx_window.draw_outline(outline_color, &label.rect, 1.0 - 0.1, 3.0);
             gfx_window.glyph_brush.queue(section);
-        }
-        unsafe {
-            if !HAVE_PRINTED_SECTIONS {
-                HAVE_PRINTED_SECTIONS = true;
-            }
         }
 
         gfx_window.glyph_brush.draw_queued(

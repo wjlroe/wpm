@@ -61,7 +61,7 @@ lazy_static! {
         .cloned()
         .unwrap();
     pub static ref TEXT_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
-        .get(&SolarizedColor::Base00)
+        .get(&SolarizedColor::Base01)
         .cloned()
         .unwrap();
     pub static ref CORRECT_WORD_COLOR: [f32; 4] = SOLARIZED_COLOR_MAP
@@ -89,5 +89,4 @@ lazy_static! {
 pub const TRANSPARENT: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 pub const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 pub const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
-pub const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];

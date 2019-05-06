@@ -31,3 +31,5 @@ pub use screens::*;
 pub use typing_result::TypingResult;
 pub use typing_state::TypingState;
 pub use typing_test::{EnteredWord, TypingTest};
+
+pub const UI_TEXT_BUTTON_SIZE: f32 = 68.0;
