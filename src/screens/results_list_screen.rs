@@ -35,7 +35,7 @@ impl ResultsListScreen {
     }
 
     pub fn new(gfx_window: &mut GfxWindow) -> Self {
-        let read_typing_results = match storage::read_results_from_file() {
+        let mut read_typing_results = match storage::read_results_from_file() {
             Ok(results) => results,
             Err(_) => storage::ReadTypingResults::default(),
         };
@@ -45,6 +45,9 @@ impl ResultsListScreen {
         let mut table_rows = Vec::new();
         // TODO: sort-by time reverse...
         // TODO: Click on column to sort by that column
+        read_typing_results
+            .results
+            .sort_unstable_by_key(|result| -(result.time as i64));
         for typing_result in read_typing_results.results {
             let datetime = if let Some(dt) = typing_result.datetime() {
                 format!("{}", dt.format("%H:%M %v"))
