@@ -191,8 +191,8 @@ impl<'a> GfxWindow<'a> {
         label
     }
 
-    pub fn queue_ui_label(&mut self, label: &Label) {
-        let ui_section = label.section(self);
-        self.glyph_brush.queue(ui_section);
+    pub fn queue_label(&mut self, label: &Label) {
+        let section = label.section(self);
+        self.glyph_brush.queue(section);
     }
 }

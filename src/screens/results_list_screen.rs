@@ -386,20 +386,16 @@ impl Screen for ResultsListScreen {
             }
         }
 
-        gfx_window.queue_ui_label(&self.back_label);
-
-        let title_section = self.list_title.section(gfx_window);
-        gfx_window.glyph_brush.queue(title_section);
+        gfx_window.queue_label(&self.back_label);
+        gfx_window.queue_label(&self.list_title);
 
         for header_label in &self.table_headers {
-            let section = header_label.section(gfx_window);
-            gfx_window.glyph_brush.queue(section);
+            gfx_window.queue_label(header_label);
         }
 
         for row in &self.table_rows {
             for label in &row.cells {
-                let section = label.section(gfx_window);
-                gfx_window.glyph_brush.queue(section);
+                gfx_window.queue_label(label);
             }
         }
 

@@ -235,9 +235,8 @@ impl Screen for ResultsScreen {
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
-        gfx_window.queue_ui_label(&self.back_label);
-
         let labels = vec![
+            &self.back_label, // FIXME: Move to app-level navigation
             &self.wpm_label,
             &self.wpm_value,
             &self.correct_label,
@@ -248,8 +247,7 @@ impl Screen for ResultsScreen {
             &self.backspaces_value,
         ];
         for label in labels {
-            let section = label.section(gfx_window);
-            gfx_window.glyph_brush.queue(section);
+            gfx_window.queue_label(label);
         }
 
         gfx_window

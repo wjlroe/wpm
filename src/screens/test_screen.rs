@@ -389,8 +389,7 @@ impl Screen for TestScreen {
             gfx_window.glyph_brush.queue(time_section);
         }
 
-        let listing_button_section = self.show_listing_label.section(gfx_window);
-        gfx_window.glyph_brush.queue(listing_button_section);
+        gfx_window.queue_label(&self.show_listing_label);
 
         gfx_window
             .glyph_brush

@@ -131,8 +131,7 @@ impl<'a> App<'a> {
         self.current_screen.render(dt, &mut self.gfx_window)?;
 
         {
-            let switch_section = self.bg_switch_label.section(&mut self.gfx_window);
-            self.gfx_window.glyph_brush.queue(switch_section);
+            self.gfx_window.queue_label(&self.bg_switch_label);
             self.gfx_window
                 .glyph_brush
                 .use_queue()
