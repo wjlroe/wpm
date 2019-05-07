@@ -295,6 +295,11 @@ impl Screen for ResultsListScreen {
         if self.table_rect.contains_point(position) {
             // find the header
             // find the row
+            for (i, table_row) in self.table_rows.iter().enumerate() {
+                if table_row.row_rect.contains_point(position) {
+                    self.goto_row = Some(i)
+                }
+            }
         }
     }
 
