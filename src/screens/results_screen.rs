@@ -248,7 +248,7 @@ impl Screen for ResultsScreen {
             &self.backspaces_value,
         ];
         for label in labels {
-            let mut section = label.section(gfx_window);
+            let mut section = label.section_without_bounds_or_position(gfx_window);
             section.bounds = label.rect.bounds.into();
             section.screen_position = label.rect.position.into();
             gfx_window.glyph_brush.queue(section);

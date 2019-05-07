@@ -388,13 +388,15 @@ impl Screen for ResultsListScreen {
 
         gfx_window.queue_ui_label(&self.back_label);
 
-        let mut title_section = self.list_title.section(gfx_window);
+        let mut title_section = self
+            .list_title
+            .section_without_bounds_or_position(gfx_window);
         title_section.bounds = self.list_title.rect.bounds.into();
         title_section.screen_position = self.list_title.rect.position.into();
         gfx_window.glyph_brush.queue(title_section);
 
         for header_label in &self.table_headers {
-            let mut section = header_label.section(gfx_window);
+            let mut section = header_label.section_without_bounds_or_position(gfx_window);
             section.bounds = header_label.rect.bounds.into();
             section.screen_position = header_label.rect.position.into();
             gfx_window.glyph_brush.queue(section);
@@ -402,7 +404,7 @@ impl Screen for ResultsListScreen {
 
         for row in &self.table_rows {
             for label in &row.cells {
-                let mut section = label.section(gfx_window);
+                let mut section = label.section_without_bounds_or_position(gfx_window);
                 section.bounds = label.rect.bounds.into();
                 section.screen_position = label.rect.position.into();
                 gfx_window.glyph_brush.queue(section);

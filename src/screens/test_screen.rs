@@ -384,7 +384,9 @@ impl Screen for TestScreen {
             gfx_window.glyph_brush.queue(time_section);
         }
 
-        let mut listing_button_section = self.show_listing_label.section(gfx_window);
+        let mut listing_button_section = self
+            .show_listing_label
+            .section_without_bounds_or_position(gfx_window);
         listing_button_section.layout = Layout::default_single_line()
             .v_align(VerticalAlign::Center)
             .h_align(HorizontalAlign::Center);

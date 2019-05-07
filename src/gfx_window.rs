@@ -187,7 +187,7 @@ impl<'a> GfxWindow<'a> {
     }
 
     pub fn queue_ui_label(&mut self, label: &Label) {
-        let mut ui_section = label.section(self);
+        let mut ui_section = label.section_without_bounds_or_position(self);
         ui_section.layout = Layout::default_single_line()
             .v_align(VerticalAlign::Center)
             .h_align(HorizontalAlign::Center);

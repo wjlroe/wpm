@@ -30,8 +30,7 @@ impl Label {
         label
     }
 
-    // FIXME: rename this section_without_bounds_or_position() because I forget this is that!
-    pub fn section(&self, gfx_window: &mut GfxWindow) -> Section {
+    pub fn section_without_bounds_or_position(&self, gfx_window: &mut GfxWindow) -> Section {
         Section {
             font_id: self.font_id,
             color: self.color,
@@ -42,7 +41,7 @@ impl Label {
     }
 
     pub fn recalc(&mut self, gfx_window: &mut GfxWindow) {
-        let section = self.section(gfx_window);
+        let section = self.section_without_bounds_or_position(gfx_window);
         if let Some(dim) = gfx_window.glyph_brush.pixel_bounds(section).map(|bounds| {
             let width = bounds.max.x;
             let height = bounds.max.y;
