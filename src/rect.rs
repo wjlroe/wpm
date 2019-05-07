@@ -38,6 +38,10 @@ impl Rect {
         vec2(self.position.x, self.position.y + self.bounds.y / 2.0)
     }
 
+    pub fn center_x(&self) -> Vector2<f32> {
+        vec2(self.position.x + self.bounds.x / 2.0, self.position.y)
+    }
+
     pub fn as_matrix_within_window(&self, window_dim: Vector2<f32>) -> Matrix4<f32> {
         let scale = Matrix4::from_nonuniform_scale(
             self.bounds.x / window_dim.x,

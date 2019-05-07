@@ -181,18 +181,18 @@ impl<'a> GfxWindow<'a> {
             TEXT_COLOR,
             String::from("←"),
             self,
+        )
+        .with_layout(
+            Layout::default_single_line()
+                .v_align(VerticalAlign::Center)
+                .h_align(HorizontalAlign::Center),
         );
         label.rect.bounds.x *= 1.5;
         label
     }
 
     pub fn queue_ui_label(&mut self, label: &Label) {
-        let mut ui_section = label.section_without_bounds_or_position(self);
-        ui_section.layout = Layout::default_single_line()
-            .v_align(VerticalAlign::Center)
-            .h_align(HorizontalAlign::Center);
-        ui_section.bounds = label.rect.bounds.into();
-        ui_section.screen_position = label.rect.center_point().into();
+        let ui_section = label.section(self);
         self.glyph_brush.queue(ui_section);
     }
 }

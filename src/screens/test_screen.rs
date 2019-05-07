@@ -33,6 +33,11 @@ impl TestScreen {
             TEXT_COLOR,
             String::from("≡"),
             gfx_window,
+        )
+        .with_layout(
+            Layout::default_single_line()
+                .v_align(VerticalAlign::Center)
+                .h_align(HorizontalAlign::Center),
         );
         show_listing_label.rect.bounds.x *= 1.5;
         let mut test_screen = Self {
@@ -384,14 +389,7 @@ impl Screen for TestScreen {
             gfx_window.glyph_brush.queue(time_section);
         }
 
-        let mut listing_button_section = self
-            .show_listing_label
-            .section_without_bounds_or_position(gfx_window);
-        listing_button_section.layout = Layout::default_single_line()
-            .v_align(VerticalAlign::Center)
-            .h_align(HorizontalAlign::Center);
-        listing_button_section.screen_position = self.show_listing_label.rect.center_point().into();
-        listing_button_section.bounds = self.show_listing_label.rect.bounds.into();
+        let listing_button_section = self.show_listing_label.section(gfx_window);
         gfx_window.glyph_brush.queue(listing_button_section);
 
         gfx_window

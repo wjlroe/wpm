@@ -1,6 +1,9 @@
 use crate::*;
 use cgmath::*;
-use gfx_glyph::{FontId, GlyphCruncher, Scale, Section};
+use gfx_glyph::{
+    BuiltInLineBreaker, FontId, GlyphCruncher, HorizontalAlign, Layout, Scale, Section,
+    VerticalAlign,
+};
 
 #[derive(Default)]
 pub struct Label {
@@ -9,6 +12,7 @@ pub struct Label {
     pub color: ColorArray,
     pub rect: Rect,
     pub text: String,
+    pub layout: Layout<BuiltInLineBreaker>,
 }
 
 impl Label {
@@ -24,20 +28,29 @@ impl Label {
             font_id,
             color,
             text,
+            layout: Layout::default(),
             ..Label::default()
         };
         label.recalc(gfx_window);
         label
     }
 
-    pub fn section_without_bounds_or_position(&self, gfx_window: &mut GfxWindow) -> Section {
+    fn section_without_bounds_or_position(&self, gfx_window: &mut GfxWindow) -> Section {
         Section {
             font_id: self.font_id,
             color: self.color,
             scale: Scale::uniform(self.font_size * gfx_window.dpi as f32),
             text: &self.text,
+            layout: self.layout,
             ..Section::default()
         }
+    }
+
+    pub fn section(&self, gfx_window: &mut GfxWindow) -> Section {
+        let mut section = self.section_without_bounds_or_position(gfx_window);
+        section.bounds = self.rect.bounds.into();
+        section.screen_position = self.screen_position().into();
+        section
     }
 
     pub fn recalc(&mut self, gfx_window: &mut GfxWindow) {
@@ -48,6 +61,30 @@ impl Label {
             vec2(width as f32, height as f32)
         }) {
             self.rect.bounds = dim;
+        }
+    }
+
+    pub fn with_layout(mut self, layout: Layout<BuiltInLineBreaker>) -> Self {
+        self.layout = layout;
+        self
+    }
+
+    fn screen_position(&self) -> Vector2<f32> {
+        match self.layout {
+            Layout::SingleLine {
+                v_align: VerticalAlign::Center,
+                h_align: HorizontalAlign::Center,
+                ..
+            } => self.rect.center_point(),
+            Layout::SingleLine {
+                v_align: VerticalAlign::Center,
+                ..
+            } => self.rect.center_y(),
+            Layout::SingleLine {
+                h_align: HorizontalAlign::Center,
+                ..
+            } => self.rect.center_x(),
+            _ => self.rect.position,
         }
     }
 }

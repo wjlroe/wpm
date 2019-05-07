@@ -131,11 +131,7 @@ impl<'a> App<'a> {
         self.current_screen.render(dt, &mut self.gfx_window)?;
 
         {
-            let mut switch_section = self
-                .bg_switch_label
-                .section_without_bounds_or_position(&mut self.gfx_window);
-            switch_section.bounds = self.bg_switch_label.rect.bounds.into();
-            switch_section.screen_position = self.bg_switch_label.rect.position.into();
+            let switch_section = self.bg_switch_label.section(&mut self.gfx_window);
             self.gfx_window.glyph_brush.queue(switch_section);
             self.gfx_window
                 .glyph_brush
