@@ -247,19 +247,10 @@ impl Screen for ResultsScreen {
             &self.backspaces_label,
             &self.backspaces_value,
         ];
-        let mut quad_color = [1.0, 1.0, 1.0, 1.0];
-        let mut outline_color = [128.0 / 256.0, 0.0, 128.0 / 156.0, 1.0];
         for label in labels {
             let mut section = label.section(gfx_window);
             section.bounds = label.rect.bounds.into();
             section.screen_position = label.rect.position.into();
-            quad_color[0] -= 0.1;
-            quad_color[1] -= 0.1;
-            quad_color[2] -= 0.1;
-            outline_color[0] -= 0.1;
-            outline_color[2] -= 0.1;
-            gfx_window.draw_quad(quad_color, &label.rect, 1.0);
-            gfx_window.draw_outline(outline_color, &label.rect, 1.0 - 0.1, 3.0);
             gfx_window.glyph_brush.queue(section);
         }
 
