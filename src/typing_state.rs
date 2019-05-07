@@ -1,6 +1,8 @@
 use crate::animation::Animation;
 use cgmath::*;
 
+const LINE_SCROLL_ANIMATION_DURATION_SECONDS: f32 = 1.2;
+
 #[derive(Clone, Default)]
 pub struct TypingState {
     pub per_line_height: f32,
@@ -45,7 +47,11 @@ impl TypingState {
     }
 
     pub fn start_animation(&mut self) {
-        self.animation = Some(Animation::new(0.0, self.per_line_height, 1.5));
+        self.animation = Some(Animation::new(
+            0.0,
+            self.per_line_height,
+            LINE_SCROLL_ANIMATION_DURATION_SECONDS,
+        ));
     }
 
     pub fn next_word(&mut self) {
