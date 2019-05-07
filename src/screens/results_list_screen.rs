@@ -11,7 +11,6 @@ const ROW_FONT_SIZE: f32 = 32.0;
 const TABLE_OUTLINE_WIDTH: f32 = 3.0;
 
 const TABLE_OUTLINE_COLOR: ColorArray = MAGENTA;
-const ROW_HIGHLIGHT_BG: ColorArray = YELLOW;
 const TABLE_HEADER_UNDERLINE: ColorArray = MAGENTA;
 
 fn table_header_label(text: String, gfx_window: &mut GfxWindow) -> Label {
@@ -374,7 +373,12 @@ impl Screen for ResultsListScreen {
         );
         if let Some(highlighted_row_idx) = self.highlighted_row {
             if let Some(table_row) = self.table_rows.get(highlighted_row_idx) {
-                gfx_window.draw_quad(ROW_HIGHLIGHT_BG, &table_row.row_rect, 1.0 - 0.3);
+                let bg = if current_bg_color() == BackgroundColor::Dark {
+                    LIGHT_BG_COLOR
+                } else {
+                    DARK_BG_COLOR
+                };
+                gfx_window.draw_quad(bg, &table_row.row_rect, 1.0 - 0.3);
             }
         }
 

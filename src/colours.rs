@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 
+#[derive(Copy, Clone, PartialEq)]
 pub enum BackgroundColor {
     Light,
     Dark,
@@ -72,6 +73,10 @@ pub fn swap_colors() {
 
 pub fn bg_color() -> ColorArray {
     BG_COLOR.with(|bg_color| *bg_color.borrow())
+}
+
+pub fn current_bg_color() -> BackgroundColor {
+    CURRENT_BG_COLOR.with(|current_bg_color| *current_bg_color.borrow())
 }
 
 pub const TRANSPARENT: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
