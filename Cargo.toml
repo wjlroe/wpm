@@ -12,7 +12,7 @@ gfx_gl = "0.6"
 gfx_window_glutin = "0.31"
 glutin = { version = "0.21", features = ["serde", "icon_loading"] }
 cgmath = "0.17.0"
-gfx_glyph = "0.14"
+gfx_glyph = "0.15"
 rmp = "0.8"
 dirs = "1"
 num-traits = "0.2"
