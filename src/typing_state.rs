@@ -41,7 +41,7 @@ impl TypingState {
     }
 
     pub fn transform(&self, window_dim: Vector2<f32>) -> Matrix4<f32> {
-        Matrix4::from_translation(vec3(0.0, self.offset() / (window_dim.y / 2.0), 0.0))
+        Matrix4::from_translation(vec3(0.0, -self.offset() / (window_dim.y / 2.0), 0.0))
     }
 
     pub fn start_animation(&mut self) {

@@ -17,7 +17,7 @@ pub struct GfxWindow<'a> {
     pub monitor: MonitorId,
     pub dpi: f64,
     pub fonts: Fonts,
-    pub window: WindowedContext,
+    pub window: WindowedContext<PossiblyCurrent>,
     pub device: gfx_device_gl::Device,
     pub quad_bundle:
         pso::bundle::Bundle<gfx_device_gl::Resources, pipe::Data<gfx_device_gl::Resources>>,
@@ -46,13 +46,17 @@ impl<'a> GfxWindow<'a> {
             .with_gl(GlRequest::Specific(OpenGl, (4, 3)))
             .with_gl_profile(GlProfile::Core)
             .with_vsync(true);
-        let (window, device, mut factory, main_color, main_depth) =
+        let (window, mut device, mut factory, main_color, main_depth) =
             gfx_window_glutin::init::<ColorFormat, DepthFormat>(
                 window_builder,
                 context,
                 &event_loop,
             )
             .expect("init gfx_window_glutin should work!");
+
+        unsafe {
+            device.with_gl(|gl| gl.Disable(gfx_gl::FRAMEBUFFER_SRGB));
+        }
 
         let (width, height, ..) = main_color.get_dimensions();
 
@@ -120,7 +124,7 @@ impl<'a> GfxWindow<'a> {
     }
 
     pub fn update_monitor(&mut self) {
-        self.monitor = self.window.get_current_monitor();
+        self.monitor = self.window.window().get_current_monitor();
     }
 
     pub fn window_dim(&self) -> Vector2<f32> {

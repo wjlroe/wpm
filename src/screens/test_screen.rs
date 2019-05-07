@@ -339,12 +339,19 @@ impl Screen for TestScreen {
         );
         gfx_window.glyph_brush.queue(typed_section);
 
-        gfx_window.glyph_brush.draw_queued_with_transform(
-            self.typing_state.transform(gfx_window.window_dim()).into(),
-            &mut gfx_window.encoder,
-            &gfx_window.quad_bundle.data.out_color,
-            &gfx_window.quad_bundle.data.out_depth,
-        )?;
+        let window_dim = gfx_window.window_dim();
+        gfx_window
+            .glyph_brush
+            .use_queue()
+            .transform(text_transform(
+                self.typing_state.transform(window_dim),
+                window_dim,
+            ))
+            .depth_target(&gfx_window.quad_bundle.data.out_depth)
+            .draw(
+                &mut gfx_window.encoder,
+                &gfx_window.quad_bundle.data.out_color,
+            )?;
 
         let input_layout = Layout::default_single_line().v_align(VerticalAlign::Center);
         let input_section = Section {
@@ -385,11 +392,14 @@ impl Screen for TestScreen {
         listing_button_section.bounds = self.show_listing_label.rect.bounds.into();
         gfx_window.glyph_brush.queue(listing_button_section);
 
-        gfx_window.glyph_brush.draw_queued(
-            &mut gfx_window.encoder,
-            &gfx_window.quad_bundle.data.out_color,
-            &gfx_window.quad_bundle.data.out_depth,
-        )?;
+        gfx_window
+            .glyph_brush
+            .use_queue()
+            .depth_target(&gfx_window.quad_bundle.data.out_depth)
+            .draw(
+                &mut gfx_window.encoder,
+                &gfx_window.quad_bundle.data.out_color,
+            )?;
 
         Ok(())
     }

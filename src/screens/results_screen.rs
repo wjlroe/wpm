@@ -263,11 +263,14 @@ impl Screen for ResultsScreen {
             gfx_window.glyph_brush.queue(section);
         }
 
-        gfx_window.glyph_brush.draw_queued(
-            &mut gfx_window.encoder,
-            &gfx_window.quad_bundle.data.out_color,
-            &gfx_window.quad_bundle.data.out_depth,
-        )?;
+        gfx_window
+            .glyph_brush
+            .use_queue()
+            .depth_target(&gfx_window.quad_bundle.data.out_depth)
+            .draw(
+                &mut gfx_window.encoder,
+                &gfx_window.quad_bundle.data.out_color,
+            )?;
 
         Ok(())
     }

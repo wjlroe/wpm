@@ -135,11 +135,14 @@ impl<'a> App<'a> {
             switch_section.bounds = self.bg_switch_label.rect.bounds.into();
             switch_section.screen_position = self.bg_switch_label.rect.position.into();
             self.gfx_window.glyph_brush.queue(switch_section);
-            self.gfx_window.glyph_brush.draw_queued(
-                &mut self.gfx_window.encoder,
-                &self.gfx_window.quad_bundle.data.out_color,
-                &self.gfx_window.quad_bundle.data.out_depth,
-            )?;
+            self.gfx_window
+                .glyph_brush
+                .use_queue()
+                .depth_target(&self.gfx_window.quad_bundle.data.out_depth)
+                .draw(
+                    &mut self.gfx_window.encoder,
+                    &self.gfx_window.quad_bundle.data.out_color,
+                )?;
         }
 
         self.gfx_window.end_frame()?;
