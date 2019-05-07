@@ -123,7 +123,7 @@ impl ResultsListScreen {
             if amount > 0 {
                 self.highlighted_row = Some(0);
             } else {
-                self.highlighted_row = Some(last_row as usize); // FIXME: last row
+                self.highlighted_row = Some(last_row as usize);
             }
         } else {
             let mut new_row = self.highlighted_row.unwrap() as i32 + amount;
@@ -291,7 +291,6 @@ impl Screen for ResultsListScreen {
             self.go_back = true;
         }
 
-        // if mouse within left/right of table (top/bottom?)
         if self.table_rect.contains_point(position) {
             // find the header
             // find the row
