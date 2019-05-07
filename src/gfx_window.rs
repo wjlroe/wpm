@@ -46,13 +46,17 @@ impl<'a> GfxWindow<'a> {
             .with_gl(GlRequest::Specific(OpenGl, (4, 3)))
             .with_gl_profile(GlProfile::Core)
             .with_vsync(true);
-        let (window, device, mut factory, main_color, main_depth) =
+        let (window, mut device, mut factory, main_color, main_depth) =
             gfx_window_glutin::init::<ColorFormat, DepthFormat>(
                 window_builder,
                 context,
                 &event_loop,
             )
             .expect("init gfx_window_glutin should work!");
+
+        unsafe {
+            device.with_gl(|gl| gl.Disable(gfx_gl::FRAMEBUFFER_SRGB));
+        }
 
         let (width, height, ..) = main_color.get_dimensions();
 

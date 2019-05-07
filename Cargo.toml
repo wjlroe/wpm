@@ -8,6 +8,7 @@ license = "MIT"
 [dependencies]
 gfx = "0.18"
 gfx_device_gl = "0.16"
+gfx_gl = "0.6"
 gfx_window_glutin = "0.30"
 glutin = { version = "0.20.0", features = ["serde", "icon_loading"] }
 cgmath = "0.17.0"
