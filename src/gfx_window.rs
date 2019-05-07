@@ -17,7 +17,7 @@ pub struct GfxWindow<'a> {
     pub monitor: MonitorId,
     pub dpi: f64,
     pub fonts: Fonts,
-    pub window: WindowedContext,
+    pub window: WindowedContext<PossiblyCurrent>,
     pub device: gfx_device_gl::Device,
     pub quad_bundle:
         pso::bundle::Bundle<gfx_device_gl::Resources, pipe::Data<gfx_device_gl::Resources>>,
@@ -124,7 +124,7 @@ impl<'a> GfxWindow<'a> {
     }
 
     pub fn update_monitor(&mut self) {
-        self.monitor = self.window.get_current_monitor();
+        self.monitor = self.window.window().get_current_monitor();
     }
 
     pub fn window_dim(&self) -> Vector2<f32> {
