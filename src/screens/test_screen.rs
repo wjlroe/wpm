@@ -84,7 +84,8 @@ impl TestScreen {
                 .h_align(HorizontalAlign::Center)
                 .v_align(VerticalAlign::Center),
         );
-        timer_label.rect.bounds.y *= 1.1;
+        timer_label.rect.bounds.y *= 1.15;
+        timer_label.rect.bounds.x *= 1.08;
         let mut test_screen = Self {
             need_font_recalc: true,
             show_listing_label,
