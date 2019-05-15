@@ -1,5 +1,5 @@
 use chrono::offset::LocalResult;
-use chrono::prelude::{DateTime, Utc};
+use chrono::prelude::{DateTime, Local};
 use chrono::TimeZone;
 use std::time::{Duration, SystemTime};
 
@@ -34,12 +34,11 @@ impl TypingResult {
         }
     }
 
-    pub fn datetime(&self) -> Option<DateTime<Utc>> {
+    pub fn datetime(&self) -> Option<DateTime<Local>> {
         if self.time == 0 {
             return None;
         }
-        // TODO: get a local timezone version of this
-        match Utc.timestamp_opt(self.time as i64, 0) {
+        match Local.timestamp_opt(self.time as i64, 0) {
             LocalResult::Single(value) => Some(value),
             _ => None,
         }
