@@ -15,6 +15,7 @@ mod storage;
 mod typing_result;
 mod typing_state;
 mod typing_test;
+mod words;
 
 pub use animation::Animation;
 pub use app::App;

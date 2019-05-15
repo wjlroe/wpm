@@ -1,7 +1,12 @@
+use crate::words;
 use crate::*;
 use cgmath::Vector2;
 use gfx_glyph::{FontId, Scale, SectionText, VariedSection};
+use rand;
+use rand::seq::SliceRandom;
 use std::time::{Duration, Instant};
+
+const SAMPLE_WORDS: usize = 300; // num of words to sample - should be less than highest WPM
 
 #[derive(Copy, Clone, Debug)]
 pub enum EnteredWord {
@@ -170,5 +175,14 @@ impl TypingTest {
             z: 1.0,
             ..VariedSection::default()
         }
+    }
+
+    pub fn top200(&mut self) {
+        let mut rng = &mut rand::thread_rng();
+        let sample = words::top_200::words();
+        self.words = sample
+            .choose_multiple(&mut rng, SAMPLE_WORDS)
+            .cloned()
+            .collect();
     }
 }
