@@ -28,6 +28,10 @@ pub struct TypingTest {
 }
 
 impl TypingTest {
+    pub fn has_started(&self) -> bool {
+        self.start_time.is_some()
+    }
+
     pub fn is_done(&self) -> Option<bool> {
         if let Some(duration) = self.duration {
             if let Some(start_time) = self.start_time {
