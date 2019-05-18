@@ -64,9 +64,40 @@ impl Label {
         }
     }
 
+    pub fn last_glyph_rect(&self, gfx_window: &mut GfxWindow) -> Option<Rect> {
+        let section = self.section(gfx_window);
+        gfx_window
+            .glyph_brush
+            .glyphs(section)
+            .last()
+            .and_then(|positioned_glyph| {
+                if let Some(old_rect) = positioned_glyph.pixel_bounding_box() {
+                    let mut rect = Rect::default();
+                    let width = old_rect.max.x - old_rect.min.x;
+                    let height = old_rect.max.y - old_rect.min.y;
+                    // This is very tight to the glyph, so tiny for 'n' and tall for 'j' etc.
+                    rect.bounds = vec2(width as f32, height as f32);
+                    let pos = positioned_glyph.position();
+                    rect.position = vec2(pos.x, pos.y);
+                    Some(rect)
+                } else {
+                    None
+                }
+            })
+    }
+
     pub fn with_layout(mut self, layout: Layout<BuiltInLineBreaker>) -> Self {
         self.layout = layout;
         self
+    }
+
+    pub fn set_text(&mut self, text: String, gfx_window: &mut GfxWindow) {
+        self.text = text;
+        self.recalc(gfx_window);
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.text.is_empty()
     }
 
     fn screen_position(&self) -> Vector2<f32> {

@@ -12,7 +12,7 @@ pub trait Screen {
     // then return the enum variant that signifies the screen to transition to
     // fn maybe_change_screen(&self) -> Option<ScreenType>
     fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>>;
-    fn process_events(&mut self, _dt: f32, _events: &[Event]) {}
+    fn process_events(&mut self, _dt: f32, _events: &[Event], _gfx_window: &mut GfxWindow) {}
     fn mouse_click(&mut self, _position: Vector2<f32>) {}
     fn update(&mut self, dt: f32, mouse_position: Vector2<f32>, gfx_window: &mut GfxWindow)
         -> bool;
