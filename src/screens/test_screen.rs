@@ -61,7 +61,7 @@ impl TestScreen {
             INPUT_FONT_SIZE,
             gfx_window.fonts.roboto_font_id,
             TEXT_COLOR,
-            String::from("X"),
+            String::from("L"),
             gfx_window,
         )
         .with_layout(Layout::default_single_line().v_align(VerticalAlign::Center));
@@ -76,7 +76,7 @@ impl TestScreen {
                 REFERENCE_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
                 TEXT_COLOR,
-                String::from("X"),
+                String::from("L"),
                 gfx_window,
             ),
             ..TestScreen::default()
@@ -100,10 +100,11 @@ impl TestScreen {
             self.input_cursor.position.y =
                 last_input_cursor_size_rect.position.y - last_input_cursor_size_rect.bounds.y;
         }
+        let left_padding = 5.0;
         if let Some(last_input_glyph_rect) = self.input_label.last_glyph_rect(gfx_window) {
-            self.input_cursor.position.x = last_input_glyph_rect.right_edge();
+            self.input_cursor.position.x = last_input_glyph_rect.right_edge() + left_padding;
         } else {
-            self.input_cursor.position.x = self.input_cursor_size.rect.position.x;
+            self.input_cursor.position.x = self.input_cursor_size.rect.position.x + left_padding;
         }
         // and for reference text
     }
