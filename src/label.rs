@@ -91,9 +91,8 @@ impl Label {
         self
     }
 
-    pub fn set_text(&mut self, text: String, gfx_window: &mut GfxWindow) {
+    pub fn set_text(&mut self, text: String, _gfx_window: &mut GfxWindow) {
         self.text = text;
-        self.recalc(gfx_window);
     }
 
     pub fn is_empty(&self) -> bool {

@@ -11,18 +11,16 @@ use std::time::Duration;
 const LISTING_BUTTON_FONT_SIZE: f32 = 68.0;
 const INPUT_FONT_SIZE: f32 = 32.0;
 const REFERENCE_FONT_SIZE: f32 = 32.0;
+const TIMER_FONT_SIZE: f32 = 48.0;
 const INPUT_CURSOR_COLOR: ColorArray = BLUE;
 const REFERENCE_CURSOR_COLOR: ColorArray = BLUE;
 
 #[derive(Default)]
 pub struct TestScreen {
     need_font_recalc: bool,
-    timer_font_size: f64,
     timer_pos_and_bounds: Rect,
-    typing_font_size: f64,
     typing_pos_and_bounds: Rect,
     typing_mask_pos_and_bounds: Rect,
-    input_pos_and_bounds: Rect,
     input_label: Label,
     typing_test: TypingTest,
     typing_state: TypingState,
@@ -52,7 +50,7 @@ impl TestScreen {
         let input_label = Label::new(
             INPUT_FONT_SIZE,
             gfx_window.fonts.roboto_font_id,
-            TEXT_COLOR,
+            CORRECT_WORD_COLOR,
             String::from(""),
             gfx_window,
         )
@@ -67,8 +65,6 @@ impl TestScreen {
         .with_layout(Layout::default_single_line().v_align(VerticalAlign::Center));
         let mut test_screen = Self {
             need_font_recalc: true,
-            timer_font_size: 48.0,
-            typing_font_size: 32.0,
             show_listing_label,
             input_label,
             input_cursor_size,
@@ -138,7 +134,7 @@ impl TestScreen {
 
         let timer_section = Section {
             font_id: gfx_window.fonts.iosevka_font_id,
-            scale: Scale::uniform((self.timer_font_size * gfx_window.dpi) as f32),
+            scale: Scale::uniform(TIMER_FONT_SIZE * gfx_window.dpi as f32),
             text: "00:00",
             ..Section::default()
         };
@@ -157,7 +153,7 @@ impl TestScreen {
         {
             let typed_section = Section {
                 font_id: gfx_window.fonts.roboto_font_id,
-                scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
+                scale: Scale::uniform(REFERENCE_FONT_SIZE * gfx_window.dpi as f32),
                 text: "AA",
                 ..Section::default()
             };
@@ -177,7 +173,7 @@ impl TestScreen {
         {
             let typed_section = Section {
                 font_id: gfx_window.fonts.roboto_font_id,
-                scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
+                scale: Scale::uniform(REFERENCE_FONT_SIZE * gfx_window.dpi as f32),
                 text: "A\nA",
                 ..Section::default()
             };
@@ -200,16 +196,16 @@ impl TestScreen {
             self.typing_pos_and_bounds.bounds =
                 vec2(30.0 * typing_character_dim.x, 2.5 * typing_character_dim.y);
 
-            self.input_pos_and_bounds.bounds = vec2(30.0 * typing_character_dim.x, input_height);
-            self.input_label.rect.bounds.y = input_height;
+            let input_width = 30.0 * typing_character_dim.x;
+            self.input_label.rect.bounds = vec2(input_width, input_height);
             self.input_cursor_size.rect.bounds.y = input_height;
 
             let mut vertical_layout = ElementLayout::vertical(gfx_window.window_dim());
             let typing_elem = vertical_layout.add_bounds(self.typing_pos_and_bounds.bounds);
-            let input_elem = vertical_layout.add_bounds(self.input_pos_and_bounds.bounds);
+            let input_elem = vertical_layout.add_bounds(self.input_label.rect.bounds);
             vertical_layout.calc_positions();
             self.typing_pos_and_bounds.position = vertical_layout.element_position(typing_elem);
-            self.input_pos_and_bounds.position = vertical_layout.element_position(input_elem);
+            self.input_label.rect.position = vertical_layout.element_position(input_elem);
 
             ElementLayout::center_horizontally(
                 gfx_window.window_dim(),
@@ -219,10 +215,9 @@ impl TestScreen {
             ElementLayout::center_horizontally(
                 gfx_window.window_dim(),
                 self.typing_pos_and_bounds.bounds,
-                &mut self.input_pos_and_bounds.position,
+                &mut self.input_label.rect.position,
             );
 
-            self.input_label.rect.position = self.input_pos_and_bounds.position;
             self.input_cursor_size.rect.position = self.input_label.rect.position;
 
             let timer_width = 1.1 * timer_character_dim.x;
@@ -230,10 +225,10 @@ impl TestScreen {
             self.timer_pos_and_bounds.position = vec2(
                 self.typing_pos_and_bounds.position.x + self.typing_pos_and_bounds.bounds.x
                     - timer_width,
-                self.input_pos_and_bounds.position.y,
+                self.input_label.rect.position.y,
             );
 
-            self.input_pos_and_bounds.bounds.x -= self.timer_pos_and_bounds.bounds.x;
+            self.input_label.rect.bounds.x -= self.timer_pos_and_bounds.bounds.x;
 
             self.typing_mask_pos_and_bounds = self.typing_pos_and_bounds;
             self.typing_mask_pos_and_bounds.position = self.typing_pos_and_bounds.position
@@ -249,7 +244,7 @@ impl TestScreen {
             let typed_section = Section {
                 font_id: gfx_window.fonts.roboto_font_id,
                 bounds: bounds.into(),
-                scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
+                scale: Scale::uniform(REFERENCE_FONT_SIZE * gfx_window.dpi as f32),
                 text: &self.typing_test.words_str(),
                 ..Section::default()
             };
@@ -289,6 +284,9 @@ impl TestScreen {
                 self.typing_state.num_words += 1;
             }
         }
+
+        // dbg!(self.input_label.rect);
+        // dbg!(self.typing_mask_pos_and_bounds);
 
         self.recalc_cursors(gfx_window);
     }
@@ -392,7 +390,7 @@ impl Screen for TestScreen {
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
-        gfx_window.draw_outline(INPUT_OUTLINE_COLOR, &self.input_pos_and_bounds, 0.8, 3.0);
+        gfx_window.draw_outline(INPUT_OUTLINE_COLOR, &self.input_label.rect, 0.8, 3.0);
         gfx_window.draw_quad(TRANSPARENT, &self.typing_mask_pos_and_bounds, 0.5);
         gfx_window.draw_outline(TIMER_OUTLINE_COLOR, &self.timer_pos_and_bounds, 1.0, 3.0);
 
@@ -405,7 +403,7 @@ impl Screen for TestScreen {
             skip_num,
             self.typing_pos_and_bounds.bounds + vec2(0.0, self.typing_state.offset()),
             self.typing_pos_and_bounds.position,
-            (self.typing_font_size * gfx_window.dpi) as f32,
+            REFERENCE_FONT_SIZE * gfx_window.dpi as f32,
             gfx_window.fonts.roboto_font_id,
         );
         gfx_window.glyph_brush.queue(typed_section);
@@ -424,18 +422,8 @@ impl Screen for TestScreen {
                 &gfx_window.quad_bundle.data.out_color,
             )?;
 
-        let input_layout = Layout::default_single_line().v_align(VerticalAlign::Center);
-        let input_section = Section {
-            text: &self.typing_test.entered_text,
-            color: CORRECT_WORD_COLOR,
-            font_id: gfx_window.fonts.roboto_font_id,
-            scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
-            bounds: self.input_pos_and_bounds.bounds.into(),
-            screen_position: self.input_pos_and_bounds.center_y().into(),
-            layout: input_layout,
-            ..Section::default()
-        };
-        gfx_window.glyph_brush.queue(input_section);
+        // FIXME: change render color based on whether word is correct or not!
+        gfx_window.queue_label(&self.input_label);
 
         // Render clock countdown timer
         if let Some(time_remaining) = self.typing_test.remaining_time_string() {
@@ -445,7 +433,7 @@ impl Screen for TestScreen {
             let time_section = Section {
                 text: &time_remaining,
                 font_id: gfx_window.fonts.iosevka_font_id,
-                scale: Scale::uniform((self.timer_font_size * gfx_window.dpi) as f32),
+                scale: Scale::uniform(TIMER_FONT_SIZE * gfx_window.dpi as f32),
                 bounds: self.timer_pos_and_bounds.bounds.into(),
                 screen_position: self.timer_pos_and_bounds.center_point().into(),
                 color: TIMER_COLOR,
