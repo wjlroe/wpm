@@ -35,3 +35,75 @@ fn test_some_words() {
     assert_eq!(82, typing_result.correct_words, "82 correct words");
     assert_eq!(82, typing_result.wpm, "82 WPM");
 }
+
+#[test]
+fn test_correct_so_far() {
+    let mut typing_test = TypingTest::default();
+    typing_test.words = vec![String::from("factotum"), String::from("blah")];
+    let first_word = typing_test.words.get(0).unwrap();
+    dbg!(first_word);
+    assert!(
+        typing_test.correct_so_far(),
+        "Nothing typed, so correct so far"
+    );
+    typing_test.typed_char('f');
+    assert!(
+        typing_test.correct_so_far(),
+        "One character typed, correct so far..."
+    );
+    typing_test.typed_char('a');
+    assert!(
+        typing_test.correct_so_far(),
+        "Two characters typed, correct so far..."
+    );
+    typing_test.typed_char('z');
+    assert!(
+        !typing_test.correct_so_far(),
+        "Now an incorrect char has been entered..."
+    );
+    typing_test.backspace();
+    assert!(
+        typing_test.correct_so_far(),
+        "Two characters typed, correct so far..."
+    );
+    typing_test.typed_char('c');
+    assert!(
+        typing_test.correct_so_far(),
+        "More characters typed, correct so far..."
+    );
+    typing_test.typed_char('t');
+    assert!(
+        typing_test.correct_so_far(),
+        "More characters typed, correct so far..."
+    );
+    typing_test.typed_char('o');
+    assert!(
+        typing_test.correct_so_far(),
+        "More characters typed, correct so far..."
+    );
+    typing_test.typed_char('t');
+    assert!(
+        typing_test.correct_so_far(),
+        "More characters typed, correct so far..."
+    );
+    typing_test.typed_char('u');
+    assert!(
+        typing_test.correct_so_far(),
+        "More characters typed, correct so far..."
+    );
+    typing_test.typed_char('m');
+    assert!(
+        typing_test.correct_so_far(),
+        "All characters typed, correct so far..."
+    );
+    typing_test.typed_char('z');
+    assert!(
+        !typing_test.correct_so_far(),
+        "Now an incorrect char has been entered..."
+    );
+    typing_test.backspace();
+    assert!(
+        typing_test.correct_so_far(),
+        "All characters typed, correct so far..."
+    );
+}

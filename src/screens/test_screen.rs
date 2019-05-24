@@ -367,6 +367,11 @@ impl Screen for TestScreen {
         };
 
         if !self.typing_test.ended {
+            self.input_label.color = if self.typing_test.correct_so_far() {
+                CORRECT_WORD_COLOR
+            } else {
+                INCORRECT_WORD_COLOR
+            };
             needs_render = true;
             if let Some(true) = self.typing_test.is_done() {
                 println!("Typing test is done!");

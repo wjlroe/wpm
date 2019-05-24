@@ -112,6 +112,18 @@ impl TypingTest {
         }
     }
 
+    pub fn correct_so_far(&self) -> bool {
+        if let Some(next_word) = self.words.get(self.next_word) {
+            if self.entered_text.len() > next_word.len() {
+                return false;
+            }
+            let relevant_next_word_chars = &next_word[..self.entered_text.len()];
+            relevant_next_word_chars == self.entered_text
+        } else {
+            false
+        }
+    }
+
     pub fn start(&mut self) {
         self.start_time = Some(Instant::now());
     }
