@@ -302,7 +302,7 @@ impl Screen for ResultsListScreen {
         }
     }
 
-    fn process_events(&mut self, _dt: f32, events: &[Event]) {
+    fn process_events(&mut self, _dt: f32, events: &[Event], _gfx_window: &mut GfxWindow) {
         for event in events.iter() {
             if let Event::WindowEvent {
                 event: win_event, ..

@@ -62,7 +62,7 @@ impl<'a> App<'a> {
     }
 
     fn mouse_click(&mut self, position: Vector2<f32>) {
-        self.current_screen.mouse_click(position);
+        self.current_screen.mouse_click(dbg!(position));
 
         if self.bg_switch_label.rect.contains_point(position) {
             swap_colors();
@@ -106,7 +106,8 @@ impl<'a> App<'a> {
                 _ => {}
             }
         }
-        self.current_screen.process_events(dt, &events);
+        self.current_screen
+            .process_events(dt, &events, &mut self.gfx_window);
     }
 
     fn update(&mut self, dt: f32) {

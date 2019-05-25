@@ -28,6 +28,10 @@ pub struct TypingTest {
 }
 
 impl TypingTest {
+    pub fn has_started(&self) -> bool {
+        self.start_time.is_some()
+    }
+
     pub fn is_done(&self) -> Option<bool> {
         if let Some(duration) = self.duration {
             if let Some(start_time) = self.start_time {
@@ -105,6 +109,18 @@ impl TypingTest {
                 self.entered_text.clear();
                 self.next_word += 1;
             }
+        }
+    }
+
+    pub fn correct_so_far(&self) -> bool {
+        if let Some(next_word) = self.words.get(self.next_word) {
+            if self.entered_text.len() > next_word.len() {
+                return false;
+            }
+            let relevant_next_word_chars = &next_word[..self.entered_text.len()];
+            relevant_next_word_chars == self.entered_text
+        } else {
+            false
         }
     }
 

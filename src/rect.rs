@@ -57,6 +57,10 @@ impl Rect {
 
         translation * scale // scale then translate
     }
+
+    pub fn right_edge(&self) -> f32 {
+        self.position.x + self.bounds.x
+    }
 }
 
 #[test]

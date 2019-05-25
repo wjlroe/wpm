@@ -9,20 +9,27 @@ use std::error::Error;
 use std::time::Duration;
 
 const LISTING_BUTTON_FONT_SIZE: f32 = 68.0;
+const INPUT_FONT_SIZE: f32 = 32.0;
+const REFERENCE_FONT_SIZE: f32 = 32.0;
+const TIMER_FONT_SIZE: f32 = 48.0;
+const INPUT_CURSOR_COLOR: ColorArray = BLUE;
+const REFERENCE_CURSOR_COLOR: ColorArray = BLUE;
 
 #[derive(Default)]
 pub struct TestScreen {
     need_font_recalc: bool,
-    timer_font_size: f64,
     timer_pos_and_bounds: Rect,
-    typing_font_size: f64,
     typing_pos_and_bounds: Rect,
     typing_mask_pos_and_bounds: Rect,
-    input_pos_and_bounds: Rect,
+    input_label: Label,
     typing_test: TypingTest,
     typing_state: TypingState,
     show_listing_label: Label,
     goto_listing: bool,
+    input_cursor: Rect,
+    reference_cursor: Rect,
+    input_cursor_size: Label,
+    reference_cursor_size: Label,
 }
 
 impl TestScreen {
@@ -40,11 +47,34 @@ impl TestScreen {
                 .h_align(HorizontalAlign::Center),
         );
         show_listing_label.rect.bounds.x *= 1.5;
+        let input_label = Label::new(
+            INPUT_FONT_SIZE,
+            gfx_window.fonts.roboto_font_id,
+            CORRECT_WORD_COLOR,
+            String::from(""),
+            gfx_window,
+        )
+        .with_layout(Layout::default_single_line().v_align(VerticalAlign::Center));
+        let input_cursor_size = Label::new(
+            INPUT_FONT_SIZE,
+            gfx_window.fonts.roboto_font_id,
+            TEXT_COLOR,
+            String::from("L"),
+            gfx_window,
+        )
+        .with_layout(Layout::default_single_line().v_align(VerticalAlign::Center));
         let mut test_screen = Self {
             need_font_recalc: true,
-            timer_font_size: 48.0,
-            typing_font_size: 32.0,
             show_listing_label,
+            input_label,
+            input_cursor_size,
+            reference_cursor_size: Label::new(
+                REFERENCE_FONT_SIZE,
+                gfx_window.fonts.roboto_font_id,
+                TEXT_COLOR,
+                String::from("L"),
+                gfx_window,
+            ),
             ..TestScreen::default()
         };
         test_screen.start_test();
@@ -56,14 +86,41 @@ impl TestScreen {
         self.typing_test.duration = Some(Duration::from_secs(60));
     }
 
-    fn type_char(&mut self, typed_char: char) {
+    fn recalc_cursors(&mut self, gfx_window: &mut GfxWindow) {
+        // measure where the current cursor is and draw a rectangle around it
+        // for input box
+        if let Some(last_input_cursor_size_rect) =
+            self.input_cursor_size.last_glyph_rect(gfx_window)
+        {
+            self.input_cursor = last_input_cursor_size_rect;
+            self.input_cursor.position.y =
+                last_input_cursor_size_rect.position.y - last_input_cursor_size_rect.bounds.y;
+        }
+        let left_padding = 5.0;
+        if let Some(last_input_glyph_rect) = self.input_label.last_glyph_rect(gfx_window) {
+            self.input_cursor.position.x = last_input_glyph_rect.right_edge() + left_padding;
+        } else {
+            self.input_cursor.position.x = self.input_cursor_size.rect.position.x + left_padding;
+        }
+        // and for reference text
+    }
+
+    fn reset_input_label_text(&mut self, gfx_window: &mut GfxWindow) {
+        self.input_label
+            .set_text(self.typing_test.entered_text.clone(), gfx_window);
+        self.recalc_cursors(gfx_window);
+    }
+
+    fn type_char(&mut self, typed_char: char, gfx_window: &mut GfxWindow) {
         if self.typing_test.typed_char(typed_char) {
             self.typing_state.next_word();
         }
+        self.reset_input_label_text(gfx_window);
     }
 
-    fn type_backspace(&mut self) {
+    fn type_backspace(&mut self, gfx_window: &mut GfxWindow) {
         self.typing_test.backspace();
+        self.reset_input_label_text(gfx_window);
     }
 
     fn update_font_metrics(&mut self, gfx_window: &mut GfxWindow) {
@@ -77,7 +134,7 @@ impl TestScreen {
 
         let timer_section = Section {
             font_id: gfx_window.fonts.iosevka_font_id,
-            scale: Scale::uniform((self.timer_font_size * gfx_window.dpi) as f32),
+            scale: Scale::uniform(TIMER_FONT_SIZE * gfx_window.dpi as f32),
             text: "00:00",
             ..Section::default()
         };
@@ -96,7 +153,7 @@ impl TestScreen {
         {
             let typed_section = Section {
                 font_id: gfx_window.fonts.roboto_font_id,
-                scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
+                scale: Scale::uniform(REFERENCE_FONT_SIZE * gfx_window.dpi as f32),
                 text: "AA",
                 ..Section::default()
             };
@@ -116,7 +173,7 @@ impl TestScreen {
         {
             let typed_section = Section {
                 font_id: gfx_window.fonts.roboto_font_id,
-                scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
+                scale: Scale::uniform(REFERENCE_FONT_SIZE * gfx_window.dpi as f32),
                 text: "A\nA",
                 ..Section::default()
             };
@@ -139,14 +196,16 @@ impl TestScreen {
             self.typing_pos_and_bounds.bounds =
                 vec2(30.0 * typing_character_dim.x, 2.5 * typing_character_dim.y);
 
-            self.input_pos_and_bounds.bounds = vec2(30.0 * typing_character_dim.x, input_height);
+            let input_width = 30.0 * typing_character_dim.x;
+            self.input_label.rect.bounds = vec2(input_width, input_height);
+            self.input_cursor_size.rect.bounds.y = input_height;
 
             let mut vertical_layout = ElementLayout::vertical(gfx_window.window_dim());
             let typing_elem = vertical_layout.add_bounds(self.typing_pos_and_bounds.bounds);
-            let input_elem = vertical_layout.add_bounds(self.input_pos_and_bounds.bounds);
+            let input_elem = vertical_layout.add_bounds(self.input_label.rect.bounds);
             vertical_layout.calc_positions();
             self.typing_pos_and_bounds.position = vertical_layout.element_position(typing_elem);
-            self.input_pos_and_bounds.position = vertical_layout.element_position(input_elem);
+            self.input_label.rect.position = vertical_layout.element_position(input_elem);
 
             ElementLayout::center_horizontally(
                 gfx_window.window_dim(),
@@ -156,18 +215,20 @@ impl TestScreen {
             ElementLayout::center_horizontally(
                 gfx_window.window_dim(),
                 self.typing_pos_and_bounds.bounds,
-                &mut self.input_pos_and_bounds.position,
+                &mut self.input_label.rect.position,
             );
+
+            self.input_cursor_size.rect.position = self.input_label.rect.position;
 
             let timer_width = 1.1 * timer_character_dim.x;
             self.timer_pos_and_bounds.bounds = vec2(timer_width, input_height);
             self.timer_pos_and_bounds.position = vec2(
                 self.typing_pos_and_bounds.position.x + self.typing_pos_and_bounds.bounds.x
                     - timer_width,
-                self.input_pos_and_bounds.position.y,
+                self.input_label.rect.position.y,
             );
 
-            self.input_pos_and_bounds.bounds.x -= self.timer_pos_and_bounds.bounds.x;
+            self.input_label.rect.bounds.x -= self.timer_pos_and_bounds.bounds.x;
 
             self.typing_mask_pos_and_bounds = self.typing_pos_and_bounds;
             self.typing_mask_pos_and_bounds.position = self.typing_pos_and_bounds.position
@@ -183,7 +244,7 @@ impl TestScreen {
             let typed_section = Section {
                 font_id: gfx_window.fonts.roboto_font_id,
                 bounds: bounds.into(),
-                scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
+                scale: Scale::uniform(REFERENCE_FONT_SIZE * gfx_window.dpi as f32),
                 text: &self.typing_test.words_str(),
                 ..Section::default()
             };
@@ -223,6 +284,11 @@ impl TestScreen {
                 self.typing_state.num_words += 1;
             }
         }
+
+        // dbg!(self.input_label.rect);
+        // dbg!(self.typing_mask_pos_and_bounds);
+
+        self.recalc_cursors(gfx_window);
     }
 }
 
@@ -244,7 +310,7 @@ impl Screen for TestScreen {
         }
     }
 
-    fn process_events(&mut self, _dt: f32, events: &[Event]) {
+    fn process_events(&mut self, _dt: f32, events: &[Event], gfx_window: &mut GfxWindow) {
         for event in events.iter() {
             if let Event::WindowEvent {
                 event: win_event, ..
@@ -252,7 +318,7 @@ impl Screen for TestScreen {
             {
                 match win_event {
                     WindowEvent::ReceivedCharacter(typed_char) if !typed_char.is_control() => {
-                        self.type_char(*typed_char);
+                        self.type_char(*typed_char, gfx_window);
                     }
                     WindowEvent::KeyboardInput {
                         input: keyboard_input,
@@ -265,7 +331,7 @@ impl Screen for TestScreen {
                             ..
                         } => {
                             if *modifiers == NO_MODS {
-                                self.type_backspace();
+                                self.type_backspace(gfx_window);
                             }
                         }
                         _ => {}
@@ -301,6 +367,11 @@ impl Screen for TestScreen {
         };
 
         if !self.typing_test.ended {
+            self.input_label.color = if self.typing_test.correct_so_far() {
+                CORRECT_WORD_COLOR
+            } else {
+                INCORRECT_WORD_COLOR
+            };
             needs_render = true;
             if let Some(true) = self.typing_test.is_done() {
                 println!("Typing test is done!");
@@ -324,16 +395,20 @@ impl Screen for TestScreen {
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
-        gfx_window.draw_outline(INPUT_OUTLINE_COLOR, &self.input_pos_and_bounds, 0.8, 3.0);
+        gfx_window.draw_outline(INPUT_OUTLINE_COLOR, &self.input_label.rect, 0.8, 3.0);
         gfx_window.draw_quad(TRANSPARENT, &self.typing_mask_pos_and_bounds, 0.5);
         gfx_window.draw_outline(TIMER_OUTLINE_COLOR, &self.timer_pos_and_bounds, 1.0, 3.0);
+
+        // TODO: change cursor color for incorrectly typed characters
+        gfx_window.draw_quad(INPUT_CURSOR_COLOR, &self.input_cursor, 0.5);
+        gfx_window.draw_quad(REFERENCE_CURSOR_COLOR, &self.reference_cursor, 0.5);
 
         let skip_num = self.typing_state.skip_num();
         let typed_section = self.typing_test.words_as_varied_section(
             skip_num,
             self.typing_pos_and_bounds.bounds + vec2(0.0, self.typing_state.offset()),
             self.typing_pos_and_bounds.position,
-            (self.typing_font_size * gfx_window.dpi) as f32,
+            REFERENCE_FONT_SIZE * gfx_window.dpi as f32,
             gfx_window.fonts.roboto_font_id,
         );
         gfx_window.glyph_brush.queue(typed_section);
@@ -352,18 +427,8 @@ impl Screen for TestScreen {
                 &gfx_window.quad_bundle.data.out_color,
             )?;
 
-        let input_layout = Layout::default_single_line().v_align(VerticalAlign::Center);
-        let input_section = Section {
-            text: &self.typing_test.entered_text,
-            color: CORRECT_WORD_COLOR,
-            font_id: gfx_window.fonts.roboto_font_id,
-            scale: Scale::uniform((self.typing_font_size * gfx_window.dpi) as f32),
-            bounds: self.input_pos_and_bounds.bounds.into(),
-            screen_position: self.input_pos_and_bounds.center_y().into(),
-            layout: input_layout,
-            ..Section::default()
-        };
-        gfx_window.glyph_brush.queue(input_section);
+        // FIXME: change render color based on whether word is correct or not!
+        gfx_window.queue_label(&self.input_label);
 
         // Render clock countdown timer
         if let Some(time_remaining) = self.typing_test.remaining_time_string() {
@@ -373,7 +438,7 @@ impl Screen for TestScreen {
             let time_section = Section {
                 text: &time_remaining,
                 font_id: gfx_window.fonts.iosevka_font_id,
-                scale: Scale::uniform((self.timer_font_size * gfx_window.dpi) as f32),
+                scale: Scale::uniform(TIMER_FONT_SIZE * gfx_window.dpi as f32),
                 bounds: self.timer_pos_and_bounds.bounds.into(),
                 screen_position: self.timer_pos_and_bounds.center_point().into(),
                 color: TIMER_COLOR,
