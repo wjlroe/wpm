@@ -302,40 +302,41 @@ impl Screen for ResultsListScreen {
         }
     }
 
-    fn process_events(&mut self, _dt: f32, events: &[Event], _gfx_window: &mut GfxWindow) {
-        for event in events.iter() {
-            if let Event::WindowEvent {
-                event: win_event, ..
-            } = event
-            {
-                match win_event {
-                    WindowEvent::KeyboardInput {
-                        input: keyboard_input,
+    fn process_event(&mut self, event: &Event, _gfx_window: &mut GfxWindow) -> bool {
+        let mut update_and_render = false;
+        if let Event::WindowEvent {
+            event: win_event, ..
+        } = event
+        {
+            match win_event {
+                WindowEvent::KeyboardInput {
+                    input: keyboard_input,
+                    ..
+                } => match keyboard_input {
+                    KeyboardInput {
+                        state: ElementState::Pressed,
+                        modifiers,
+                        virtual_keycode,
                         ..
-                    } => match keyboard_input {
-                        KeyboardInput {
-                            state: ElementState::Pressed,
-                            modifiers,
-                            virtual_keycode,
-                            ..
-                        } => {
-                            if *modifiers == NO_MODS {
-                                if let Some(virtual_keycode) = *virtual_keycode {
-                                    match virtual_keycode {
-                                        VirtualKeyCode::Down => self.move_highlight(1),
-                                        VirtualKeyCode::Up => self.move_highlight(-1),
-                                        VirtualKeyCode::Return => self.select_row(),
-                                        _ => {}
-                                    }
+                    } => {
+                        if *modifiers == NO_MODS {
+                            if let Some(virtual_keycode) = virtual_keycode {
+                                match virtual_keycode {
+                                    VirtualKeyCode::Down => self.move_highlight(1),
+                                    VirtualKeyCode::Up => self.move_highlight(-1),
+                                    VirtualKeyCode::Return => self.select_row(),
+                                    _ => {}
                                 }
+                                update_and_render = true;
                             }
                         }
-                        _ => {}
-                    },
+                    }
                     _ => {}
-                }
+                },
+                _ => {}
             }
         }
+        update_and_render
     }
 
     fn update(

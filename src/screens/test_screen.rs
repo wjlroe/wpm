@@ -310,36 +310,38 @@ impl Screen for TestScreen {
         }
     }
 
-    fn process_events(&mut self, _dt: f32, events: &[Event], gfx_window: &mut GfxWindow) {
-        for event in events.iter() {
-            if let Event::WindowEvent {
-                event: win_event, ..
-            } = event
-            {
-                match win_event {
-                    WindowEvent::ReceivedCharacter(typed_char) if !typed_char.is_control() => {
-                        self.type_char(*typed_char, gfx_window);
-                    }
-                    WindowEvent::KeyboardInput {
-                        input: keyboard_input,
-                        ..
-                    } => match keyboard_input {
-                        KeyboardInput {
-                            virtual_keycode: Some(VirtualKeyCode::Back),
-                            state: ElementState::Released,
-                            modifiers,
-                            ..
-                        } => {
-                            if *modifiers == NO_MODS {
-                                self.type_backspace(gfx_window);
-                            }
-                        }
-                        _ => {}
-                    },
-                    _ => {}
+    fn process_event(&mut self, event: &Event, gfx_window: &mut GfxWindow) -> bool {
+        let mut update_and_render = false;
+        if let Event::WindowEvent {
+            event: win_event, ..
+        } = event
+        {
+            match win_event {
+                WindowEvent::ReceivedCharacter(typed_char) if !typed_char.is_control() => {
+                    self.type_char(*typed_char, gfx_window);
+                    update_and_render = true;
                 }
+                WindowEvent::KeyboardInput {
+                    input: keyboard_input,
+                    ..
+                } => match keyboard_input {
+                    KeyboardInput {
+                        virtual_keycode: Some(VirtualKeyCode::Back),
+                        state: ElementState::Released,
+                        modifiers,
+                        ..
+                    } => {
+                        if *modifiers == NO_MODS {
+                            self.type_backspace(gfx_window);
+                            update_and_render = true;
+                        }
+                    }
+                    _ => {}
+                },
+                _ => {}
             }
-        }
+        };
+        update_and_render
     }
 
     fn mouse_click(&mut self, position: Vector2<f32>) {

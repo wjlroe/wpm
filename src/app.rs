@@ -16,15 +16,11 @@ pub struct App<'a> {
     bg_switch_label: Label,
 }
 
-impl<'a> Default for App<'a> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+const MAX_FRAME_TIME: Duration = Duration::from_millis(33);
 
 impl<'a> App<'a> {
-    pub fn new() -> Self {
-        let mut gfx_window = GfxWindow::default();
+    pub fn new(event_loop: &EventsLoop) -> Self {
+        let mut gfx_window = GfxWindow::default_win_size(event_loop);
         let screen = screens::TestScreen::new(&mut gfx_window);
         let bg_switch_label = Label::new(
             32.0, // FIXME: what font size?
@@ -53,12 +49,10 @@ impl<'a> App<'a> {
             win_height - self.bg_switch_label.rect.bounds.y - border_size;
     }
 
-    fn window_resized(&mut self, dt: f32) {
+    fn window_resized(&mut self) {
         self.gfx_window.resize();
         self.current_screen.window_resized(&mut self.gfx_window);
         self.recalc_label_positions();
-        self.render_screen = true;
-        let _ = self.render(dt);
     }
 
     fn mouse_click(&mut self, position: Vector2<f32>) {
@@ -69,45 +63,46 @@ impl<'a> App<'a> {
         }
     }
 
-    fn process_events(&mut self, dt: f32) {
-        let mut events = vec![];
-
-        self.gfx_window.get_events(&mut events);
-
-        for event in events.iter() {
-            match event {
-                Event::WindowEvent {
-                    event: win_event, ..
-                } => match win_event {
-                    WindowEvent::CloseRequested | WindowEvent::Destroyed => self.running = false,
-                    WindowEvent::Resized(new_logical_size) => {
-                        self.gfx_window.logical_size = *new_logical_size;
-                        self.window_resized(dt);
-                    }
-                    WindowEvent::HiDpiFactorChanged(new_dpi) => {
-                        self.gfx_window.dpi = *new_dpi;
-                        self.window_resized(dt);
-                    }
-                    WindowEvent::Moved(_) => {
-                        self.gfx_window.update_monitor();
-                    }
-                    WindowEvent::CursorMoved { position, .. } => {
-                        self.mouse_position = *position;
-                    }
-                    WindowEvent::MouseInput {
-                        state: ElementState::Pressed,
-                        ..
-                    } => {
-                        let physical_mouse = self.mouse_position.to_physical(self.gfx_window.dpi);
-                        self.mouse_click(vec2(physical_mouse.x as f32, physical_mouse.y as f32));
-                    }
-                    _ => {}
-                },
+    fn process_event(&mut self, event: &Event) -> bool {
+        let mut update_and_render = false;
+        match event {
+            Event::WindowEvent {
+                event: win_event, ..
+            } => match win_event {
+                WindowEvent::CloseRequested | WindowEvent::Destroyed => self.running = false,
+                WindowEvent::Resized(new_logical_size) => {
+                    self.gfx_window.logical_size = *new_logical_size;
+                    self.window_resized();
+                    update_and_render = true;
+                }
+                WindowEvent::HiDpiFactorChanged(new_dpi) => {
+                    self.gfx_window.dpi = *new_dpi;
+                    self.window_resized();
+                    update_and_render = true;
+                }
+                WindowEvent::Moved(_) => {
+                    self.gfx_window.update_monitor();
+                    update_and_render = true;
+                }
+                WindowEvent::CursorMoved { position, .. } => {
+                    self.mouse_position = *position;
+                }
+                WindowEvent::MouseInput {
+                    state: ElementState::Pressed,
+                    ..
+                } => {
+                    let physical_mouse = self.mouse_position.to_physical(self.gfx_window.dpi);
+                    self.mouse_click(vec2(physical_mouse.x as f32, physical_mouse.y as f32));
+                    update_and_render = true;
+                }
                 _ => {}
-            }
-        }
-        self.current_screen
-            .process_events(dt, &events, &mut self.gfx_window);
+            },
+            _ => {}
+        };
+        update_and_render
+            || self
+                .current_screen
+                .process_event(&event, &mut self.gfx_window)
     }
 
     fn update(&mut self, dt: f32) {
@@ -123,8 +118,6 @@ impl<'a> App<'a> {
             .maybe_change_to_screen(&mut self.gfx_window)
         {
             self.current_screen = new_screen
-        } else if !self.render_screen {
-            thread::sleep(Duration::from_millis(100));
         }
     }
 
@@ -147,18 +140,36 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn run(&mut self, event_loop: &mut EventsLoop) -> Result<(), Box<dyn Error>> {
         let mut last_frame_time = Instant::now();
+        let event_proxy = event_loop.create_proxy();
 
-        while self.running {
+        thread::spawn(move || loop {
+            let _ = event_proxy.wakeup();
+            thread::sleep(MAX_FRAME_TIME);
+        });
+
+        event_loop.run_forever(move |event| {
+            let mut update_and_render = self.process_event(&event);
             let elapsed = last_frame_time.elapsed();
-            last_frame_time = Instant::now();
-            let dt = elapsed.as_secs() as f32 + elapsed.subsec_nanos() as f32 * 1e-9;
+            if elapsed >= MAX_FRAME_TIME {
+                update_and_render = true;
+            }
 
-            self.process_events(dt);
-            self.update(dt);
-            self.render(dt)?;
-        }
+            if update_and_render {
+                last_frame_time = Instant::now();
+                let dt = elapsed.as_secs() as f32 + elapsed.subsec_nanos() as f32 * 1e-9;
+
+                self.update(dt);
+                let _ = self.render(dt);
+            }
+
+            if self.running {
+                ControlFlow::Continue
+            } else {
+                ControlFlow::Break
+            }
+        });
 
         Ok(())
     }
