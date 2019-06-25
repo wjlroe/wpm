@@ -141,6 +141,7 @@ impl<'a> App<'a> {
     }
 
     pub fn run(&mut self, event_loop: &mut EventsLoop) -> Result<(), Box<dyn Error>> {
+        self.window_resized(); // Ensure calculations are completed, without relying on a resize event
         let mut last_frame_time = Instant::now();
         let event_proxy = event_loop.create_proxy();
 
