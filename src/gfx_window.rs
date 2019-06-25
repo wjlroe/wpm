@@ -10,7 +10,6 @@ use glutin::*;
 use std::error::Error;
 
 pub struct GfxWindow<'a> {
-    pub event_loop: EventsLoop,
     pub logical_size: LogicalSize,
     pub physical_size: PhysicalSize,
     pub window_dim: (u16, u16),
@@ -25,15 +24,12 @@ pub struct GfxWindow<'a> {
     pub encoder: Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
 }
 
-impl<'a> Default for GfxWindow<'a> {
-    fn default() -> GfxWindow<'a> {
-        GfxWindow::new(768.0, 576.0)
-    }
-}
-
 impl<'a> GfxWindow<'a> {
-    pub fn new(win_width: f64, win_height: f64) -> Self {
-        let event_loop = EventsLoop::new();
+    pub fn default_win_size(event_loop: &EventsLoop) -> Self {
+        Self::new(768.0, 576.0, event_loop)
+    }
+
+    pub fn new(win_width: f64, win_height: f64, event_loop: &EventsLoop) -> Self {
         let logical_size = LogicalSize::new(win_width, win_height);
         let monitor = event_loop.get_primary_monitor();
         let dpi = monitor.get_hidpi_factor();
@@ -50,7 +46,7 @@ impl<'a> GfxWindow<'a> {
             gfx_window_glutin::init::<ColorFormat, DepthFormat>(
                 window_builder,
                 context,
-                &event_loop,
+                event_loop,
             )
             .expect("init gfx_window_glutin should work!");
 
@@ -92,7 +88,6 @@ impl<'a> GfxWindow<'a> {
         let encoder: Encoder<_, _> = factory.create_command_buffer().into();
 
         Self {
-            event_loop,
             logical_size,
             physical_size,
             window_dim: (width, height),
@@ -117,10 +112,6 @@ impl<'a> GfxWindow<'a> {
         );
         let (width, height, ..) = self.quad_bundle.data.out_color.get_dimensions();
         self.window_dim = (width, height);
-    }
-
-    pub fn get_events(&mut self, events: &mut Vec<Event>) {
-        self.event_loop.poll_events(|event| events.push(event));
     }
 
     pub fn update_monitor(&mut self) {
