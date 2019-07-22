@@ -4,13 +4,14 @@ use chrono::TimeZone;
 use std::fmt;
 use std::time::{Duration, SystemTime};
 
-#[derive(Copy, Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub struct TypingResult {
     pub correct_words: i32,
     pub incorrect_words: i32,
     pub backspaces: i32,
     pub wpm: i32,
     pub time: u64,
+    pub notes: String,
 }
 
 impl TypingResult {
@@ -32,6 +33,7 @@ impl TypingResult {
             backspaces,
             wpm,
             time,
+            notes: String::new(),
         }
     }
 

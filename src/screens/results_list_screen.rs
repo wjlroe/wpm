@@ -46,11 +46,12 @@ impl TableRow {
         } else {
             "?".to_string()
         };
+        let wpm = typing_result.wpm;
         Self {
             typing_result,
             cells: vec![
                 table_cell_label(datetime, gfx_window),
-                table_cell_label(format!("{}", typing_result.wpm), gfx_window),
+                table_cell_label(format!("{}", wpm), gfx_window),
             ],
             row_rect: Rect::default(),
         }
@@ -274,7 +275,7 @@ impl Screen for ResultsListScreen {
         } else if let Some(goto_row) = self.goto_row {
             if let Some(table_row) = self.table_rows.get(goto_row) {
                 Some(Box::new(screens::ResultsScreen::new(
-                    table_row.typing_result,
+                    table_row.typing_result.clone(),
                     gfx_window,
                 )))
             } else {
