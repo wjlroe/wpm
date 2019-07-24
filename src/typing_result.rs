@@ -1,6 +1,7 @@
 use chrono::offset::LocalResult;
 use chrono::prelude::{DateTime, Local};
 use chrono::TimeZone;
+use std::fmt;
 use std::time::{Duration, SystemTime};
 
 #[derive(Copy, Clone, Default, Debug, PartialEq)]
@@ -42,5 +43,20 @@ impl TypingResult {
             LocalResult::Single(value) => Some(value),
             _ => None,
         }
+    }
+}
+
+impl fmt::Display for TypingResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let datetime = if let Some(local) = self.datetime() {
+            format!("{}", local)
+        } else {
+            format!("NO DATETIME")
+        };
+        write!(
+            f,
+            "Result: [{}], {}wpm (correct words: {}, incorrect words: {}, backspaces: {})",
+            datetime, self.wpm, self.correct_words, self.incorrect_words, self.backspaces
+        )
     }
 }
