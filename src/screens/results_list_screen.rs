@@ -76,7 +76,10 @@ impl ResultsListScreen {
     pub fn new(gfx_window: &mut GfxWindow) -> Self {
         let mut read_typing_results = match storage::read_results_from_file() {
             Ok(results) => results,
-            Err(_) => storage::ReadTypingResults::default(),
+            Err(err) => {
+                println!("Error reading results from file: {:?}", err);
+                storage::ReadTypingResults::default()
+            }
         };
         if read_typing_results.records_need_upgrading {
             // TODO: do the record upgrade
