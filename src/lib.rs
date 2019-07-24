@@ -11,7 +11,7 @@ mod quad;
 mod rect;
 mod screen;
 mod screens;
-mod storage;
+pub mod storage;
 mod typing_result;
 mod typing_state;
 mod typing_test;
