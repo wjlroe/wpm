@@ -55,7 +55,7 @@ impl fmt::Display for TypingResult {
         };
         write!(
             f,
-            "Result: [{}], {}wpm (correct words: {}, incorrect words: {}, backspaces: {})",
+            "Result: [{}], {:3}wpm (correct words: {:3}, incorrect words: {:3}, backspaces: {:3})",
             datetime, self.wpm, self.correct_words, self.incorrect_words, self.backspaces
         )
     }
