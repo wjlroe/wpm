@@ -35,6 +35,7 @@ fn read_results<R: Read>(rd: &mut R) -> Result<ReadTypingResults, Box<dyn Error>
     let mut read_typing_results = ReadTypingResults::default();
 
     loop {
+        println!("so far we have: {} results read", read_typing_results.results.len());
         match decode::read_marker(rd) {
             Err(_) => break,
             Ok(Marker::FixExt1) => match decode::read_data_i8(rd) {
@@ -75,7 +76,7 @@ pub fn read_results_from_file() -> Result<ReadTypingResults, Box<dyn Error>> {
 
 fn save_result<W: Write>(wr: &mut W, typing_result: &TypingResult) -> Result<(), Box<dyn Error>> {
     encode::write_ext_meta(wr, 1, CURRENT_VERSION)?;
-    storage_v2::StorageV2::save_result(wr, typing_result)
+    storage_v3::StorageV3::save_result(wr, typing_result)
 }
 
 pub fn save_result_to_file(typing_result: &TypingResult) -> Result<(), Box<dyn Error>> {
@@ -262,4 +263,10 @@ fn test_write_some_v1s_and_v2s_and_read_them_back() {
         read_typing_results.results
     );
     assert_eq!(true, read_typing_results.records_need_upgrading);
+}
+
+#[test]
+fn test_read_results_from_file() {
+    let results = read_results_from_file();
+    assert!(results.is_ok());
 }
