@@ -13,9 +13,16 @@ fn run_gui() -> Result<(), Box<dyn Error>> {
 }
 
 fn print_results() -> Result<(), Box<dyn Error>> {
-    let results = storage::read_results_from_file()?;
-    for typing_result in results.results {
-        println!("{}", typing_result);
+    match storage::read_results_from_file() {
+        Err(error) => {
+            println!("{:?}", error);
+            println!("source: {:?}", error.source());
+        }
+        Ok(results) => {
+            for typing_result in results.results {
+                println!("{}", typing_result);
+            }
+        }
     }
     Ok(())
 }
