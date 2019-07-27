@@ -263,9 +263,3 @@ fn test_write_some_v1s_and_v2s_and_read_them_back() {
     );
     assert_eq!(true, read_typing_results.records_need_upgrading);
 }
-
-#[test]
-fn test_read_results_from_file() {
-    let results = read_results_from_file();
-    assert!(results.is_ok());
-}
