@@ -35,7 +35,6 @@ fn read_results<R: Read>(rd: &mut R) -> Result<ReadTypingResults, Box<dyn Error>
     let mut read_typing_results = ReadTypingResults::default();
 
     loop {
-        println!("so far we have: {} results read", read_typing_results.results.len());
         match decode::read_marker(rd) {
             Err(_) => break,
             Ok(Marker::FixExt1) => match decode::read_data_i8(rd) {
