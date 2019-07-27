@@ -22,12 +22,14 @@ impl Storage for StorageV3 {
     fn read_result<R: Read>(rd: &mut R) -> Result<TypingResult, Box<dyn Error>> {
         let mut typing_result = TypingResult::default();
 
-        typing_result.correct_words = decode::read_i32(rd)?;
-        typing_result.incorrect_words = decode::read_i32(rd)?;
-        typing_result.backspaces = decode::read_i32(rd)?;
-        typing_result.wpm = decode::read_i32(rd)?;
-        typing_result.time = decode::read_u64(rd)?;
-        let notes_len = decode::read_str_len(rd)?;
+        typing_result.correct_words =
+            decode::read_i32(rd).map_err(StorageError::MissingCorrectWords)?;
+        typing_result.incorrect_words =
+            decode::read_i32(rd).map_err(StorageError::MissingIncorrectWords)?;
+        typing_result.backspaces = decode::read_i32(rd).map_err(StorageError::MissingBackspaces)?;
+        typing_result.wpm = decode::read_i32(rd).map_err(StorageError::MissingWpm)?;
+        typing_result.time = decode::read_u64(rd).map_err(StorageError::MissingTime)?;
+        let notes_len = decode::read_str_len(rd).map_err(StorageError::MissingNotesLen)?;
         let mut notes = vec![0; notes_len as usize];
 
         match decode::read_str(rd, &mut notes.as_mut_slice()) {

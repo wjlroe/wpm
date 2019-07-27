@@ -21,10 +21,12 @@ impl Storage for StorageV1 {
     fn read_result<R: Read>(rd: &mut R) -> Result<TypingResult, Box<dyn Error>> {
         let mut typing_result = TypingResult::default();
 
-        typing_result.correct_words = decode::read_i32(rd)?;
-        typing_result.incorrect_words = decode::read_i32(rd)?;
-        typing_result.backspaces = decode::read_i32(rd)?;
-        typing_result.wpm = decode::read_i32(rd)?;
+        typing_result.correct_words =
+            decode::read_i32(rd).map_err(StorageError::MissingCorrectWords)?;
+        typing_result.incorrect_words =
+            decode::read_i32(rd).map_err(StorageError::MissingIncorrectWords)?;
+        typing_result.backspaces = decode::read_i32(rd).map_err(StorageError::MissingBackspaces)?;
+        typing_result.wpm = decode::read_i32(rd).map_err(StorageError::MissingWpm)?;
         Ok(typing_result)
     }
 }

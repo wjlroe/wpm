@@ -7,6 +7,8 @@ use std::error::Error;
 use std::fs::{DirBuilder, OpenOptions};
 use std::io::{ErrorKind, Read, Write};
 use std::path::PathBuf;
+mod storage_error;
+pub use storage_error::StorageError;
 mod storage_v1;
 mod storage_v2;
 mod storage_v3;
