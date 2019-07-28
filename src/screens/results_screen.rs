@@ -105,7 +105,7 @@ impl ResultsScreen {
     }
 
     fn update_font_metrics(&mut self, gfx_window: &mut GfxWindow) {
-        let longest_width_of_labels = vec![
+        let longest_width_of_labels = [
             &self.wpm_label,
             &self.correct_label,
             &self.incorrect_label,
@@ -121,7 +121,7 @@ impl ResultsScreen {
         })
         .unwrap_or(0.0);
 
-        let longest_width_of_values = vec![
+        let longest_width_of_values = [
             &self.wpm_value,
             &self.correct_value,
             &self.incorrect_value,
@@ -266,7 +266,7 @@ impl Screen for ResultsScreen {
             .encoder
             .clear_depth(&gfx_window.quad_bundle.data.out_depth, 1.0);
 
-        let labels = vec![
+        let labels = [
             &self.back_label, // FIXME: Move to app-level navigation
             &self.wpm_label,
             &self.wpm_value,
@@ -279,7 +279,7 @@ impl Screen for ResultsScreen {
             &self.notes_label,
             &self.notes_value,
         ];
-        for label in labels {
+        for label in labels.iter() {
             gfx_window.queue_label(label);
         }
 

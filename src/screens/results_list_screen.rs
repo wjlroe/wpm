@@ -34,7 +34,7 @@ fn table_cell_label(text: String, gfx_window: &mut GfxWindow) -> Label {
 }
 
 struct TableRow {
-    cells: Vec<Label>,
+    cells: [Label; 3],
     row_rect: Rect,
     typing_result: TypingResult,
 }
@@ -50,7 +50,7 @@ impl TableRow {
         let notes = typing_result.notes.clone();
         Self {
             typing_result,
-            cells: vec![
+            cells: [
                 table_cell_label(datetime, gfx_window),
                 table_cell_label(format!("{}", wpm), gfx_window),
                 table_cell_label(notes, gfx_window),
@@ -65,7 +65,7 @@ pub struct ResultsListScreen {
     back_label: Label,
     go_back: bool,
     list_title: Label,
-    table_headers: Vec<Label>,
+    table_headers: [Label; 3],
     table_rows: Vec<TableRow>,
     table_rect: Rect,
     table_header_rect: Rect,
@@ -105,7 +105,7 @@ impl ResultsListScreen {
                 String::from("Typing speed results:"),
                 gfx_window,
             ),
-            table_headers: vec![
+            table_headers: [
                 table_header_label(String::from("Date"), gfx_window),
                 table_header_label(String::from("WPM"), gfx_window),
                 table_header_label(String::from("Notes"), gfx_window),
