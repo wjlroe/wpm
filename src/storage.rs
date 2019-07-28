@@ -180,6 +180,29 @@ fn test_write_then_read_back_v3_records_only() {
 }
 
 #[test]
+fn test_read_and_write_current_version() {
+    let typing_result = TypingResult {
+        correct_words: 102,
+        incorrect_words: 5,
+        backspaces: 2,
+        wpm: 187,
+        time: 1556223259,
+        notes: String::from("Here are some notes..."),
+        ..TypingResult::default()
+    };
+
+    let mut buffer = Vec::new();
+
+    let _ = save_result(&mut buffer, &typing_result).expect("save should have worked!");
+
+    let read_typing_results = read_results(&mut &buffer[..]).expect("Read back the results");
+
+    assert_eq!(1, read_typing_results.results.len());
+    assert_eq!(typing_result, read_typing_results.results[0]);
+    assert_eq!(false, read_typing_results.records_need_upgrading);
+}
+
+#[test]
 fn test_write_a_future_version_which_will_be_ignored_when_read_back() {
     let typing_result = TypingResult {
         correct_words: 87,
