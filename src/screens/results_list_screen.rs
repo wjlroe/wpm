@@ -87,7 +87,6 @@ impl ResultsListScreen {
             // TODO: do the record upgrade
         }
         let mut table_rows = Vec::new();
-        // TODO: sort-by time reverse...
         // TODO: Click on column to sort by that column
         read_typing_results
             .results
