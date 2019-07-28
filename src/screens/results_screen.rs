@@ -20,6 +20,8 @@ pub struct ResultsScreen {
     incorrect_value: Label,
     backspaces_label: Label,
     backspaces_value: Label,
+    notes_label: Label,
+    notes_value: Label,
     back_label: Label,
 }
 
@@ -84,6 +86,20 @@ impl ResultsScreen {
                 format!("{}", typing_result.backspaces),
                 gfx_window,
             ),
+            notes_label: Label::new(
+                NORMAL_LABEL_FONT_SIZE,
+                gfx_window.fonts.roboto_font_id,
+                TEXT_COLOR,
+                String::from("Notes"),
+                gfx_window,
+            ),
+            notes_value: Label::new(
+                NORMAL_LABEL_FONT_SIZE,
+                gfx_window.fonts.iosevka_font_id,
+                TEXT_COLOR,
+                typing_result.notes.clone(),
+                gfx_window,
+            ),
             back_label: gfx_window.back_label(),
         }
     }
@@ -94,6 +110,7 @@ impl ResultsScreen {
             &self.correct_label,
             &self.incorrect_label,
             &self.backspaces_label,
+            &self.notes_label,
         ]
         .iter()
         .map(|label| label.rect.bounds.x)
@@ -109,6 +126,7 @@ impl ResultsScreen {
             &self.correct_value,
             &self.incorrect_value,
             &self.backspaces_value,
+            &self.notes_value,
         ]
         .iter()
         .map(|label| label.rect.bounds.x)
@@ -146,6 +164,13 @@ impl ResultsScreen {
         );
         backspaces_rect.bounds.x = line_width;
 
+        let mut notes_rect = Rect::default();
+        notes_rect.bounds.y = f32::max(
+            self.notes_label.rect.bounds.y,
+            self.notes_value.rect.bounds.y,
+        );
+        notes_rect.bounds.x = line_width;
+
         let padding_rect = vec2(line_width, 5.0);
 
         let mut vertical_layout = ElementLayout::vertical(gfx_window.window_dim());
@@ -156,16 +181,20 @@ impl ResultsScreen {
         let incorrect_rect_elem = vertical_layout.add_bounds(incorrect_rect.bounds);
         let _ = vertical_layout.add_bounds(padding_rect);
         let backspaces_rect_elem = vertical_layout.add_bounds(backspaces_rect.bounds);
+        let _ = vertical_layout.add_bounds(padding_rect);
+        let notes_rect_elem = vertical_layout.add_bounds(notes_rect.bounds);
         vertical_layout.calc_positions();
         self.wpm_label.rect.position = vertical_layout.element_position(result_rect_elem);
         self.correct_label.rect.position = vertical_layout.element_position(correct_rect_elem);
         self.incorrect_label.rect.position = vertical_layout.element_position(incorrect_rect_elem);
         self.backspaces_label.rect.position =
             vertical_layout.element_position(backspaces_rect_elem);
+        self.notes_label.rect.position = vertical_layout.element_position(notes_rect_elem);
         self.wpm_value.rect.position.y = self.wpm_label.rect.position.y;
         self.correct_value.rect.position.y = self.correct_label.rect.position.y;
         self.incorrect_value.rect.position.y = self.incorrect_label.rect.position.y;
         self.backspaces_value.rect.position.y = self.backspaces_label.rect.position.y;
+        self.notes_value.rect.position.y = self.notes_label.rect.position.y;
 
         let mut horizontal_layout = ElementLayout::horizontal(gfx_window.window_dim());
         let result_rect_elem = horizontal_layout.add_bounds(result_rect.bounds);
@@ -176,6 +205,7 @@ impl ResultsScreen {
         self.correct_label.rect.position.x = left_margin;
         self.incorrect_label.rect.position.x = left_margin;
         self.backspaces_label.rect.position.x = left_margin;
+        self.notes_label.rect.position.x = left_margin;
 
         let vertical_padding = 15.0;
 
@@ -186,6 +216,7 @@ impl ResultsScreen {
             left_margin + vertical_padding + longest_width_of_labels;
         self.backspaces_value.rect.position.x =
             left_margin + vertical_padding + longest_width_of_labels;
+        self.notes_value.rect.position.x = left_margin + vertical_padding + longest_width_of_labels;
 
         self.back_label.rect.position = vec2(20.0, 20.0);
     }
@@ -245,6 +276,8 @@ impl Screen for ResultsScreen {
             &self.incorrect_value,
             &self.backspaces_label,
             &self.backspaces_value,
+            &self.notes_label,
+            &self.notes_value,
         ];
         for label in labels {
             gfx_window.queue_label(label);
