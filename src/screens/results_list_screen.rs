@@ -47,11 +47,13 @@ impl TableRow {
             "?".to_string()
         };
         let wpm = typing_result.wpm;
+        let notes = typing_result.notes.clone();
         Self {
             typing_result,
             cells: vec![
                 table_cell_label(datetime, gfx_window),
                 table_cell_label(format!("{}", wpm), gfx_window),
+                table_cell_label(notes, gfx_window),
             ],
             row_rect: Rect::default(),
         }
@@ -107,6 +109,7 @@ impl ResultsListScreen {
             table_headers: vec![
                 table_header_label(String::from("Date"), gfx_window),
                 table_header_label(String::from("WPM"), gfx_window),
+                table_header_label(String::from("Notes"), gfx_window),
             ],
             table_rows,
             table_rect: Rect::default(),
