@@ -143,26 +143,11 @@ impl<'a> GfxWindow<'a> {
     }
 
     pub fn draw_outline(&mut self, color: [f32; 4], rect: &rect::Rect, z: f32, thickness: f32) {
-        let window_dim = self.window_dim();
         let mut inner_rect = *rect;
         inner_rect.bounds -= vec2(thickness * 2.0, thickness * 2.0);
         inner_rect.position += vec2(thickness, thickness);
-        draw_quad(
-            &mut self.quad_bundle,
-            &inner_rect,
-            TRANSPARENT,
-            z - 0.001,
-            window_dim,
-            &mut self.encoder,
-        );
-        draw_quad(
-            &mut self.quad_bundle,
-            rect,
-            color,
-            z,
-            window_dim,
-            &mut self.encoder,
-        );
+        self.draw_quad(TRANSPARENT, &inner_rect, z - 0.001);
+        self.draw_quad(color, rect, z);
     }
 
     pub fn back_label(&mut self) -> Label {
