@@ -293,7 +293,7 @@ impl TestScreen {
 }
 
 impl Screen for TestScreen {
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
+    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>> {
         if self.goto_listing {
             Some(Box::new(ResultsListScreen::new(gfx_window)))
         } else if self.typing_test.ended {
@@ -350,10 +350,6 @@ impl Screen for TestScreen {
         }
     }
 
-    fn window_resized(&mut self, gfx_window: &mut GfxWindow) {
-        self.update_font_metrics(gfx_window);
-    }
-
     fn update(
         &mut self,
         dt: f32,
@@ -387,6 +383,10 @@ impl Screen for TestScreen {
         }
 
         needs_render
+    }
+
+    fn window_resized(&mut self, gfx_window: &mut GfxWindow) {
+        self.update_font_metrics(gfx_window);
     }
 
     fn render(&self, _dt: f32, gfx_window: &mut GfxWindow) -> Result<(), Box<dyn Error>> {

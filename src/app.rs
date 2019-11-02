@@ -12,7 +12,7 @@ pub struct App<'a> {
     gfx_window: GfxWindow<'a>,
     mouse_position: LogicalPosition,
     render_screen: bool,
-    current_screen: Box<Screen>,
+    current_screen: Box<dyn Screen>,
     bg_switch_label: Label,
 }
 

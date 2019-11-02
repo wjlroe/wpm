@@ -1,4 +1,6 @@
 use crate::storage::*;
+use crate::TypingResult;
+use rmp::{decode, encode};
 use std::error::Error;
 use std::io::{Read, Write};
 

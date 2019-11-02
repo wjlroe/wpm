@@ -268,7 +268,7 @@ impl ResultsListScreen {
 }
 
 impl Screen for ResultsListScreen {
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
+    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>> {
         if self.go_back {
             Some(Box::new(screens::TestScreen::new(gfx_window)))
         } else if let Some(goto_row) = self.goto_row {
@@ -282,23 +282,6 @@ impl Screen for ResultsListScreen {
             }
         } else {
             None
-        }
-    }
-
-    fn mouse_click(&mut self, position: Vector2<f32>) {
-        // check if mouse is positioned over one of the results rows
-        if self.back_label.rect.contains_point(position) {
-            self.go_back = true;
-        }
-
-        if self.table_rect.contains_point(position) {
-            // find the header
-            // find the row
-            for (i, table_row) in self.table_rows.iter().enumerate() {
-                if table_row.row_rect.contains_point(position) {
-                    self.goto_row = Some(i)
-                }
-            }
         }
     }
 
@@ -337,6 +320,23 @@ impl Screen for ResultsListScreen {
             }
         }
         update_and_render
+    }
+
+    fn mouse_click(&mut self, position: Vector2<f32>) {
+        // check if mouse is positioned over one of the results rows
+        if self.back_label.rect.contains_point(position) {
+            self.go_back = true;
+        }
+
+        if self.table_rect.contains_point(position) {
+            // find the header
+            // find the row
+            for (i, table_row) in self.table_rows.iter().enumerate() {
+                if table_row.row_rect.contains_point(position) {
+                    self.goto_row = Some(i)
+                }
+            }
+        }
     }
 
     fn update(
