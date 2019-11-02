@@ -285,23 +285,6 @@ impl Screen for ResultsListScreen {
         }
     }
 
-    fn mouse_click(&mut self, position: Vector2<f32>) {
-        // check if mouse is positioned over one of the results rows
-        if self.back_label.rect.contains_point(position) {
-            self.go_back = true;
-        }
-
-        if self.table_rect.contains_point(position) {
-            // find the header
-            // find the row
-            for (i, table_row) in self.table_rows.iter().enumerate() {
-                if table_row.row_rect.contains_point(position) {
-                    self.goto_row = Some(i)
-                }
-            }
-        }
-    }
-
     fn process_event(&mut self, event: &Event, _gfx_window: &mut GfxWindow) -> bool {
         let mut update_and_render = false;
         if let Event::WindowEvent {
@@ -337,6 +320,23 @@ impl Screen for ResultsListScreen {
             }
         }
         update_and_render
+    }
+
+    fn mouse_click(&mut self, position: Vector2<f32>) {
+        // check if mouse is positioned over one of the results rows
+        if self.back_label.rect.contains_point(position) {
+            self.go_back = true;
+        }
+
+        if self.table_rect.contains_point(position) {
+            // find the header
+            // find the row
+            for (i, table_row) in self.table_rows.iter().enumerate() {
+                if table_row.row_rect.contains_point(position) {
+                    self.goto_row = Some(i)
+                }
+            }
+        }
     }
 
     fn update(
