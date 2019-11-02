@@ -268,7 +268,7 @@ impl ResultsListScreen {
 }
 
 impl Screen for ResultsListScreen {
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
+    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>> {
         if self.go_back {
             Some(Box::new(screens::TestScreen::new(gfx_window)))
         } else if let Some(goto_row) = self.goto_row {

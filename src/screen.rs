@@ -11,7 +11,7 @@ pub trait Screen {
     // so maybe static vec of screens, modify when need to transition to one
     // then return the enum variant that signifies the screen to transition to
     // fn maybe_change_screen(&self) -> Option<ScreenType>
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>>;
+    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>>;
     fn process_event(&mut self, _event: &Event, _gfx_window: &mut GfxWindow) -> bool {
         false
     }

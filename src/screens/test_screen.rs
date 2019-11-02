@@ -293,7 +293,7 @@ impl TestScreen {
 }
 
 impl Screen for TestScreen {
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<Screen>> {
+    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>> {
         if self.goto_listing {
             Some(Box::new(ResultsListScreen::new(gfx_window)))
         } else if self.typing_test.ended {
