@@ -41,7 +41,7 @@ impl error::Error for StorageError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             StorageError::MissingCorrectWords(ref err) => Some(err),
             StorageError::MissingIncorrectWords(ref err) => Some(err),
