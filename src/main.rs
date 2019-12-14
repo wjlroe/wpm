@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use clap;
 use glutin::EventsLoop;
 use std::error::Error;
