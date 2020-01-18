@@ -274,9 +274,13 @@ impl ResultsListScreen {
 }
 
 impl Screen for ResultsListScreen {
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>> {
+    fn maybe_change_to_screen(
+        &self,
+        gfx_window: &mut GfxWindow,
+        config: &Config,
+    ) -> Option<Box<dyn Screen>> {
         if self.go_back {
-            Some(Box::new(screens::TestScreen::new(gfx_window)))
+            Some(Box::new(screens::TestScreen::new(gfx_window, config)))
         } else if let Some(goto_row) = self.goto_row {
             if let Some(table_row) = self.table_rows.get(goto_row) {
                 Some(Box::new(screens::ResultsScreen::new(
@@ -349,6 +353,7 @@ impl Screen for ResultsListScreen {
         &mut self,
         _dt: f32,
         _mouse_position: Vector2<f32>,
+        _config: &Config,
         gfx_window: &mut GfxWindow,
     ) -> bool {
         if self.need_font_recalc {

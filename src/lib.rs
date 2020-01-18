@@ -1,6 +1,7 @@
 mod animation;
 pub mod app;
 mod colours;
+pub mod config;
 mod fonts;
 mod gfx_window;
 mod input;
@@ -20,6 +21,7 @@ mod words;
 pub use animation::Animation;
 pub use app::App;
 pub use colours::*;
+pub use config::Config;
 pub use fonts::*;
 pub use gfx_window::GfxWindow;
 pub use input::*;

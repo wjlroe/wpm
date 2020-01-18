@@ -223,9 +223,13 @@ impl ResultsScreen {
 }
 
 impl Screen for ResultsScreen {
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>> {
+    fn maybe_change_to_screen(
+        &self,
+        gfx_window: &mut GfxWindow,
+        config: &Config,
+    ) -> Option<Box<dyn Screen>> {
         if self.go_back {
-            let screen = screens::TestScreen::new(gfx_window);
+            let screen = screens::TestScreen::new(gfx_window, config);
             Some(Box::new(screen))
         } else {
             None
@@ -242,6 +246,7 @@ impl Screen for ResultsScreen {
         &mut self,
         _dt: f32,
         _mouse_position: Vector2<f32>,
+        _config: &Config,
         gfx_window: &mut GfxWindow,
     ) -> bool {
         // animate the WPM figure counting upwards

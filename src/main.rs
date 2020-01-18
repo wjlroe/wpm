@@ -1,12 +1,12 @@
 use clap;
 use glutin::EventsLoop;
 use std::error::Error;
-use wpm::storage;
-use wpm::App;
+use wpm::{config, storage, App};
 
 fn run_gui() -> Result<(), Box<dyn Error>> {
     let mut event_loop = EventsLoop::new();
-    let mut app = App::new(&event_loop);
+    let config = config::Config::new();
+    let mut app = App::new(&event_loop, config);
     app.run(&mut event_loop)?;
 
     Ok(())

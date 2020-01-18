@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::screens;
 use crate::*;
 use cgmath::*;
@@ -14,14 +15,15 @@ pub struct App<'a> {
     render_screen: bool,
     current_screen: Box<dyn Screen>,
     bg_switch_label: Label,
+    config: Config,
 }
 
 const MAX_FRAME_TIME: Duration = Duration::from_millis(33);
 
 impl<'a> App<'a> {
-    pub fn new(event_loop: &EventsLoop) -> Self {
+    pub fn new(event_loop: &EventsLoop, config: Config) -> Self {
         let mut gfx_window = GfxWindow::default_win_size(event_loop);
-        let screen = screens::TestScreen::new(&mut gfx_window);
+        let screen = screens::TestScreen::new(&mut gfx_window, &config);
         let bg_switch_label = Label::new(
             32.0, // FIXME: what font size?
             gfx_window.fonts.iosevka_font_id,
@@ -36,6 +38,7 @@ impl<'a> App<'a> {
             render_screen: true,
             current_screen: Box::new(screen),
             bg_switch_label,
+            config,
         }
     }
 
@@ -110,12 +113,13 @@ impl<'a> App<'a> {
         self.render_screen = self.current_screen.update(
             dt,
             vec2(physical_mouse.x as f32, physical_mouse.y as f32),
+            &self.config,
             &mut self.gfx_window,
         );
 
         if let Some(new_screen) = self
             .current_screen
-            .maybe_change_to_screen(&mut self.gfx_window)
+            .maybe_change_to_screen(&mut self.gfx_window, &self.config)
         {
             self.current_screen = new_screen
         }

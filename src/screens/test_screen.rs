@@ -6,7 +6,6 @@ use gfx_glyph::{
 };
 use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use std::error::Error;
-use std::time::Duration;
 
 const LISTING_BUTTON_FONT_SIZE: f32 = 68.0;
 const INPUT_FONT_SIZE: f32 = 32.0;
@@ -33,7 +32,7 @@ pub struct TestScreen {
 }
 
 impl TestScreen {
-    pub fn new(gfx_window: &mut GfxWindow) -> Self {
+    pub fn new(gfx_window: &mut GfxWindow, config: &Config) -> Self {
         let mut show_listing_label = Label::new(
             LISTING_BUTTON_FONT_SIZE,
             gfx_window.fonts.iosevka_font_id,
@@ -77,13 +76,13 @@ impl TestScreen {
             ),
             ..TestScreen::default()
         };
-        test_screen.start_test();
+        test_screen.start_test(config);
         test_screen
     }
 
-    fn start_test(&mut self) {
+    fn start_test(&mut self, config: &Config) {
         self.typing_test.top200();
-        self.typing_test.duration = Some(Duration::from_secs(60));
+        self.typing_test.duration = Some(config.default_test_duration);
     }
 
     fn recalc_cursors(&mut self, gfx_window: &mut GfxWindow) {
@@ -293,7 +292,11 @@ impl TestScreen {
 }
 
 impl Screen for TestScreen {
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>> {
+    fn maybe_change_to_screen(
+        &self,
+        gfx_window: &mut GfxWindow,
+        _config: &Config,
+    ) -> Option<Box<dyn Screen>> {
         if self.goto_listing {
             Some(Box::new(ResultsListScreen::new(gfx_window)))
         } else if self.typing_test.ended {
@@ -354,6 +357,7 @@ impl Screen for TestScreen {
         &mut self,
         dt: f32,
         _mouse_position: Vector2<f32>,
+        _config: &Config,
         gfx_window: &mut GfxWindow,
     ) -> bool {
         let mut needs_render = if self.need_font_recalc {
