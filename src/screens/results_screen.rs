@@ -288,8 +288,7 @@ impl Screen for ResultsScreen {
     fn mouse_click(&mut self, position: Vector2<f32>) {
         if self.back_label.rect.contains_point(position) {
             self.go_back = true;
-        } else if self.save_label.rect.contains_point(position) {
-            // TODO: We should only display and respond to this if record is unsaved/dirty
+        } else if self.unsaved_result && self.save_label.rect.contains_point(position) {
             self.save_result = true;
         }
     }
