@@ -128,6 +128,7 @@ impl ResultsScreen {
         self.notes_value
             .set_text(self.typing_result.notes.clone(), gfx_window);
         self.notes_value.recalc(gfx_window);
+        self.unsaved_result = true;
     }
 
     fn type_backspace(&mut self, gfx_window: &mut GfxWindow) {
@@ -135,6 +136,7 @@ impl ResultsScreen {
         self.notes_value
             .set_text(self.typing_result.notes.clone(), gfx_window);
         self.notes_value.recalc(gfx_window);
+        self.unsaved_result = true;
     }
 
     fn update_font_metrics(&mut self, gfx_window: &mut GfxWindow) {
@@ -367,10 +369,13 @@ impl Screen for ResultsScreen {
             &self.backspaces_value,
             &self.notes_label,
             &self.notes_value,
-            &self.save_label,
         ];
         for label in labels.iter() {
             gfx_window.queue_label(label);
+        }
+
+        if self.unsaved_result {
+            gfx_window.queue_label(&self.save_label);
         }
 
         gfx_window
