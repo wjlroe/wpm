@@ -206,8 +206,6 @@ impl ResultsScreen {
         );
         notes_rect.bounds.x = line_width;
 
-        let mut save_rect = self.save_label.rect;
-
         let padding_rect = vec2(line_width, 5.0);
 
         let mut vertical_layout = ElementLayout::vertical(gfx_window.window_dim());
@@ -221,7 +219,7 @@ impl ResultsScreen {
         let _ = vertical_layout.add_bounds(padding_rect);
         let notes_rect_elem = vertical_layout.add_bounds(notes_rect.bounds);
         let _ = vertical_layout.add_bounds(padding_rect);
-        let save_rect_elem = vertical_layout.add_bounds(save_rect.bounds);
+        let save_rect_elem = vertical_layout.add_bounds(self.save_label.rect.bounds);
         vertical_layout.calc_positions();
         self.wpm_label.rect.position = vertical_layout.element_position(result_rect_elem);
         self.correct_label.rect.position = vertical_layout.element_position(correct_rect_elem);
