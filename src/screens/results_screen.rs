@@ -2,6 +2,7 @@ use crate::layout::ElementLayout;
 use crate::screens;
 use crate::*;
 use cgmath::*;
+use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use std::error::Error;
 
 const NORMAL_LABEL_FONT_SIZE: f32 = 32.0;
@@ -10,8 +11,11 @@ const HEADLINE_VALUE_FONT_SIZE: f32 = 48.0;
 
 #[derive(Default)]
 pub struct ResultsScreen {
+    typing_result: TypingResult,
+    unsaved_result: bool,
     need_font_recalc: bool,
     go_back: bool,
+    save_result: bool,
     wpm_label: Label,
     wpm_value: Label,
     correct_label: Label,
@@ -23,13 +27,21 @@ pub struct ResultsScreen {
     notes_label: Label,
     notes_value: Label,
     back_label: Label,
+    save_label: Label,
 }
 
 impl ResultsScreen {
-    pub fn new(typing_result: TypingResult, gfx_window: &mut GfxWindow) -> Self {
+    pub fn new(
+        typing_result: TypingResult,
+        unsaved_result: bool,
+        gfx_window: &mut GfxWindow,
+    ) -> Self {
         Self {
+            typing_result: typing_result.clone(),
+            unsaved_result,
             need_font_recalc: true,
             go_back: false,
+            save_result: false,
             wpm_label: Label::new(
                 HEADLINE_LABEL_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
@@ -101,7 +113,28 @@ impl ResultsScreen {
                 gfx_window,
             ),
             back_label: gfx_window.back_label(),
+            save_label: Label::new(
+                NORMAL_LABEL_FONT_SIZE,
+                gfx_window.fonts.iosevka_font_id,
+                TEXT_COLOR,
+                String::from("Save"),
+                gfx_window,
+            ),
         }
+    }
+
+    fn type_char(&mut self, typed: char, gfx_window: &mut GfxWindow) {
+        self.typing_result.notes.push(typed);
+        self.notes_value
+            .set_text(self.typing_result.notes.clone(), gfx_window);
+        self.notes_value.recalc(gfx_window);
+    }
+
+    fn type_backspace(&mut self, gfx_window: &mut GfxWindow) {
+        let _ = self.typing_result.notes.pop();
+        self.notes_value
+            .set_text(self.typing_result.notes.clone(), gfx_window);
+        self.notes_value.recalc(gfx_window);
     }
 
     fn update_font_metrics(&mut self, gfx_window: &mut GfxWindow) {
@@ -231,6 +264,14 @@ impl Screen for ResultsScreen {
         if self.go_back {
             let screen = screens::TestScreen::new(gfx_window, config);
             Some(Box::new(screen))
+        } else if self.save_result {
+            match storage::save_result_to_file(&self.typing_result) {
+                Err(error) => {
+                    println!("Error saving results to file: {:?}", error);
+                }
+                _ => {}
+            };
+            Some(Box::new(ResultsListScreen::new(gfx_window)))
         } else {
             None
         }
@@ -240,6 +281,40 @@ impl Screen for ResultsScreen {
         if self.back_label.rect.contains_point(position) {
             self.go_back = true;
         }
+    }
+
+    fn process_event(&mut self, event: &Event, gfx_window: &mut GfxWindow) -> bool {
+        let mut update_and_render = false;
+        if let Event::WindowEvent {
+            event: win_event, ..
+        } = event
+        {
+            match win_event {
+                WindowEvent::ReceivedCharacter(typed_char) if !typed_char.is_control() => {
+                    self.type_char(*typed_char, gfx_window);
+                    update_and_render = true;
+                }
+                WindowEvent::KeyboardInput {
+                    input: keyboard_input,
+                    ..
+                } => match keyboard_input {
+                    KeyboardInput {
+                        virtual_keycode: Some(VirtualKeyCode::Back),
+                        state: ElementState::Released,
+                        modifiers,
+                        ..
+                    } => {
+                        if *modifiers == NO_MODS {
+                            self.type_backspace(gfx_window);
+                            update_and_render = true;
+                        }
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+        };
+        update_and_render
     }
 
     fn update(

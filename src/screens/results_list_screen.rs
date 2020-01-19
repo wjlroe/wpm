@@ -285,6 +285,7 @@ impl Screen for ResultsListScreen {
             if let Some(table_row) = self.table_rows.get(goto_row) {
                 Some(Box::new(screens::ResultsScreen::new(
                     table_row.typing_result.clone(),
+                    false,
                     gfx_window,
                 )))
             } else {
