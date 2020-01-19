@@ -15,6 +15,7 @@ const INPUT_CURSOR_COLOR: ColorArray = BLUE;
 const REFERENCE_CURSOR_COLOR: ColorArray = BLUE;
 
 #[derive(Default)]
+#[allow(dead_code)]
 pub struct TestScreen {
     need_font_recalc: bool,
     timer_pos_and_bounds: Rect,
