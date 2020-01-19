@@ -204,6 +204,8 @@ impl ResultsScreen {
         );
         notes_rect.bounds.x = line_width;
 
+        let mut save_rect = self.save_label.rect;
+
         let padding_rect = vec2(line_width, 5.0);
 
         let mut vertical_layout = ElementLayout::vertical(gfx_window.window_dim());
@@ -216,6 +218,8 @@ impl ResultsScreen {
         let backspaces_rect_elem = vertical_layout.add_bounds(backspaces_rect.bounds);
         let _ = vertical_layout.add_bounds(padding_rect);
         let notes_rect_elem = vertical_layout.add_bounds(notes_rect.bounds);
+        let _ = vertical_layout.add_bounds(padding_rect);
+        let save_rect_elem = vertical_layout.add_bounds(save_rect.bounds);
         vertical_layout.calc_positions();
         self.wpm_label.rect.position = vertical_layout.element_position(result_rect_elem);
         self.correct_label.rect.position = vertical_layout.element_position(correct_rect_elem);
@@ -223,6 +227,7 @@ impl ResultsScreen {
         self.backspaces_label.rect.position =
             vertical_layout.element_position(backspaces_rect_elem);
         self.notes_label.rect.position = vertical_layout.element_position(notes_rect_elem);
+        self.save_label.rect.position = vertical_layout.element_position(save_rect_elem);
         self.wpm_value.rect.position.y = self.wpm_label.rect.position.y;
         self.correct_value.rect.position.y = self.correct_label.rect.position.y;
         self.incorrect_value.rect.position.y = self.incorrect_label.rect.position.y;
@@ -239,6 +244,7 @@ impl ResultsScreen {
         self.incorrect_label.rect.position.x = left_margin;
         self.backspaces_label.rect.position.x = left_margin;
         self.notes_label.rect.position.x = left_margin;
+        self.save_label.rect.position.x = left_margin;
 
         let vertical_padding = 15.0;
 
@@ -280,6 +286,9 @@ impl Screen for ResultsScreen {
     fn mouse_click(&mut self, position: Vector2<f32>) {
         if self.back_label.rect.contains_point(position) {
             self.go_back = true;
+        } else if self.save_label.rect.contains_point(position) {
+            // TODO: We should only display and respond to this if record is unsaved/dirty
+            self.save_result = true;
         }
     }
 
@@ -358,6 +367,7 @@ impl Screen for ResultsScreen {
             &self.backspaces_value,
             &self.notes_label,
             &self.notes_value,
+            &self.save_label,
         ];
         for label in labels.iter() {
             gfx_window.queue_label(label);
