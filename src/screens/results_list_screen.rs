@@ -34,7 +34,7 @@ fn table_cell_label(text: String, gfx_window: &mut GfxWindow) -> Label {
 }
 
 struct TableRow {
-    cells: Vec<Label>,
+    cells: [Label; 3],
     row_rect: Rect,
     typing_result: TypingResult,
 }
@@ -46,11 +46,14 @@ impl TableRow {
         } else {
             "?".to_string()
         };
+        let wpm = typing_result.wpm;
+        let notes = typing_result.notes.clone();
         Self {
             typing_result,
-            cells: vec![
+            cells: [
                 table_cell_label(datetime, gfx_window),
-                table_cell_label(format!("{}", typing_result.wpm), gfx_window),
+                table_cell_label(format!("{}", wpm), gfx_window),
+                table_cell_label(notes, gfx_window),
             ],
             row_rect: Rect::default(),
         }
@@ -62,7 +65,7 @@ pub struct ResultsListScreen {
     back_label: Label,
     go_back: bool,
     list_title: Label,
-    table_headers: Vec<Label>,
+    table_headers: [Label; 3],
     table_rows: Vec<TableRow>,
     table_rect: Rect,
     table_header_rect: Rect,
@@ -75,13 +78,15 @@ impl ResultsListScreen {
     pub fn new(gfx_window: &mut GfxWindow) -> Self {
         let mut read_typing_results = match storage::read_results_from_file() {
             Ok(results) => results,
-            Err(_) => storage::ReadTypingResults::default(),
+            Err(err) => {
+                println!("Error reading results from file: {:?}", err);
+                storage::ReadTypingResults::default()
+            }
         };
         if read_typing_results.records_need_upgrading {
             // TODO: do the record upgrade
         }
         let mut table_rows = Vec::new();
-        // TODO: sort-by time reverse...
         // TODO: Click on column to sort by that column
         read_typing_results
             .results
@@ -100,9 +105,10 @@ impl ResultsListScreen {
                 String::from("Typing speed results:"),
                 gfx_window,
             ),
-            table_headers: vec![
+            table_headers: [
                 table_header_label(String::from("Date"), gfx_window),
                 table_header_label(String::from("WPM"), gfx_window),
+                table_header_label(String::from("Notes"), gfx_window),
             ],
             table_rows,
             table_rect: Rect::default(),
@@ -268,13 +274,18 @@ impl ResultsListScreen {
 }
 
 impl Screen for ResultsListScreen {
-    fn maybe_change_to_screen(&self, gfx_window: &mut GfxWindow) -> Option<Box<dyn Screen>> {
+    fn maybe_change_to_screen(
+        &self,
+        gfx_window: &mut GfxWindow,
+        config: &Config,
+    ) -> Option<Box<dyn Screen>> {
         if self.go_back {
-            Some(Box::new(screens::TestScreen::new(gfx_window)))
+            Some(Box::new(screens::TestScreen::new(gfx_window, config)))
         } else if let Some(goto_row) = self.goto_row {
             if let Some(table_row) = self.table_rows.get(goto_row) {
                 Some(Box::new(screens::ResultsScreen::new(
-                    table_row.typing_result,
+                    table_row.typing_result.clone(),
+                    false,
                     gfx_window,
                 )))
             } else {
@@ -343,6 +354,7 @@ impl Screen for ResultsListScreen {
         &mut self,
         _dt: f32,
         _mouse_position: Vector2<f32>,
+        _config: &Config,
         gfx_window: &mut GfxWindow,
     ) -> bool {
         if self.need_font_recalc {

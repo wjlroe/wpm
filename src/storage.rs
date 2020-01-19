@@ -7,17 +7,21 @@ use std::error::Error;
 use std::fs::{DirBuilder, OpenOptions};
 use std::io::{ErrorKind, Read, Write};
 use std::path::PathBuf;
+mod storage_error;
+pub use storage_error::StorageError;
 mod storage_v1;
 mod storage_v2;
+mod storage_v3;
 
 #[repr(i8)]
 #[derive(FromPrimitive)]
 enum StorageVersions {
     V1 = 0x01,
     V2 = 0x02,
+    V3 = 0x03,
 }
 
-pub const CURRENT_VERSION: i8 = StorageVersions::V2 as i8;
+pub const CURRENT_VERSION: i8 = StorageVersions::V3 as i8;
 
 fn results_path() -> PathBuf {
     config_dir().unwrap().join("wpm").join("typing_results.wpm")
@@ -43,6 +47,7 @@ fn read_results<R: Read>(rd: &mut R) -> Result<ReadTypingResults, Box<dyn Error>
                     let typing_result = match FromPrimitive::from_i8(version_num) {
                         Some(StorageVersions::V1) => Some(storage_v1::StorageV1::read_result(rd)?),
                         Some(StorageVersions::V2) => Some(storage_v2::StorageV2::read_result(rd)?),
+                        Some(StorageVersions::V3) => Some(storage_v3::StorageV3::read_result(rd)?),
                         None => None,
                     };
                     if let Some(typing_result) = typing_result {
@@ -72,7 +77,7 @@ pub fn read_results_from_file() -> Result<ReadTypingResults, Box<dyn Error>> {
 
 fn save_result<W: Write>(wr: &mut W, typing_result: &TypingResult) -> Result<(), Box<dyn Error>> {
     encode::write_ext_meta(wr, 1, CURRENT_VERSION)?;
-    storage_v2::StorageV2::save_result(wr, typing_result)
+    storage_v3::StorageV3::save_result(wr, typing_result)
 }
 
 pub fn save_result_to_file(typing_result: &TypingResult) -> Result<(), Box<dyn Error>> {
@@ -142,6 +147,53 @@ fn test_write_then_read_back_v2_records_only() {
 
     encode::write_ext_meta(&mut buffer, 1, StorageVersions::V2 as i8).unwrap();
     storage_v2::StorageV2::save_result(&mut buffer, &typing_result).unwrap();
+
+    let read_typing_results = read_results(&mut &buffer[..]).expect("Read back the results");
+
+    assert_eq!(1, read_typing_results.results.len());
+    assert_eq!(typing_result, read_typing_results.results[0]);
+    assert_eq!(true, read_typing_results.records_need_upgrading);
+}
+
+#[test]
+fn test_write_then_read_back_v3_records_only() {
+    let typing_result = TypingResult {
+        correct_words: 87,
+        incorrect_words: 3,
+        backspaces: 2,
+        wpm: 87,
+        time: 1556223259,
+        notes: String::from("Interesting typing result!"),
+        ..TypingResult::default()
+    };
+
+    let mut buffer = Vec::new();
+
+    encode::write_ext_meta(&mut buffer, 1, StorageVersions::V3 as i8).unwrap();
+    storage_v3::StorageV3::save_result(&mut buffer, &typing_result).unwrap();
+
+    let read_typing_results = read_results(&mut &buffer[..]).expect("Read back the results");
+
+    assert_eq!(1, read_typing_results.results.len());
+    assert_eq!(typing_result, read_typing_results.results[0]);
+    assert_eq!(false, read_typing_results.records_need_upgrading);
+}
+
+#[test]
+fn test_read_and_write_current_version() {
+    let typing_result = TypingResult {
+        correct_words: 102,
+        incorrect_words: 5,
+        backspaces: 2,
+        wpm: 187,
+        time: 1556223259,
+        notes: String::from("Here are some notes..."),
+        ..TypingResult::default()
+    };
+
+    let mut buffer = Vec::new();
+
+    let _ = save_result(&mut buffer, &typing_result).expect("save should have worked!");
 
     let read_typing_results = read_results(&mut &buffer[..]).expect("Read back the results");
 
