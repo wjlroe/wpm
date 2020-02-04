@@ -98,6 +98,22 @@ impl<'a> App<'a> {
                     self.mouse_click(vec2(physical_mouse.x as f32, physical_mouse.y as f32));
                     update_and_render = true;
                 }
+                WindowEvent::KeyboardInput {
+                    input: keyboard_input,
+                    ..
+                } => match keyboard_input {
+                    KeyboardInput {
+                        virtual_keycode: Some(VirtualKeyCode::Q),
+                        state: ElementState::Pressed,
+                        modifiers,
+                        ..
+                    } => {
+                        if *modifiers == MOD_CMD || *modifiers == MOD_CTRL {
+                            self.running = false;
+                        }
+                    }
+                    _ => {}
+                },
                 _ => {}
             },
             _ => {}
