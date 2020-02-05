@@ -1,5 +1,6 @@
 [package]
 name = "wpm"
+description = "Typing test tool"
 version = "0.1.0"
 authors = ["William Roe <git@wjlr.org.uk>"]
 edition = "2018"
@@ -29,3 +30,8 @@ winapi = { version = "0.3.5", features = [
   "processenv",
   "synchapi"
 ] }
+
+[package.metadata.bundle]
+name = "WPM"
+identifier = "me.willroe.apps.wpm"
+version = "0.1.0"
