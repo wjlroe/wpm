@@ -12,7 +12,7 @@ fn test_some_words() {
     let end_time = Instant::now();
     let duration = Duration::from_secs(60);
     let start_time = end_time - duration;
-    typing_test.words = words;
+    typing_test.set_words(words);
     typing_test.duration = Some(duration);
     // fake start time because it uses elapsed time internally
     typing_test.start_time = Some(Instant::now());
