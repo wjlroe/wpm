@@ -55,10 +55,10 @@ impl Label {
 
     pub fn recalc(&mut self, gfx_window: &mut GfxWindow) {
         let section = self.section_without_bounds_or_position(gfx_window);
-        if let Some(dim) = gfx_window.glyph_brush.pixel_bounds(section).map(|bounds| {
+        if let Some(dim) = gfx_window.glyph_brush.glyph_bounds(section).map(|bounds| {
             let width = bounds.max.x;
             let height = bounds.max.y;
-            vec2(width as f32, height as f32)
+            vec2(width, height)
         }) {
             self.rect.bounds = dim;
         }
