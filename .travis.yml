@@ -4,8 +4,7 @@ os:
 rust: stable
 cache:
   directories:
-    - "$HOME/.cargo"
-    - "$HOME/.multirust"
+    - "$HOME/.cargo/registry"
     - target
 before_script:
   - export PATH="$PATH:$HOME/.cargo/bin"
