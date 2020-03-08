@@ -13,7 +13,6 @@ const REFERENCE_FONT_SIZE: f32 = 32.0;
 const TIMER_FONT_SIZE: f32 = 48.0;
 const INPUT_CURSOR_COLOR: ColorArray = BLUE;
 const REFERENCE_CURSOR_COLOR: ColorArray = BLUE;
-const REFERENCE_TEXT_FONT_SIZE: f32 = 32.0;
 
 #[derive(Default)]
 #[allow(dead_code)]
@@ -65,7 +64,7 @@ impl TestScreen {
         )
         .with_layout(Layout::default_single_line().v_align(VerticalAlign::Center));
         let mut reference_text_label = Label::new(
-            REFERENCE_TEXT_FONT_SIZE,
+            REFERENCE_FONT_SIZE,
             gfx_window.fonts.roboto_font_id,
             TEXT_COLOR,
             String::from("AA\nAA"),
