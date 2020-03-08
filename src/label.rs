@@ -1,8 +1,8 @@
 use crate::*;
 use cgmath::*;
 use gfx_glyph::{
-    BuiltInLineBreaker, FontId, GlyphCruncher, HorizontalAlign, Layout, Scale, Section,
-    VerticalAlign,
+    BuiltInLineBreaker, FontId, GlyphCruncher, HorizontalAlign, Layout, OwnedSectionText,
+    OwnedVariedSection, Scale, Section, VerticalAlign,
 };
 
 #[derive(Default)]
@@ -51,6 +51,15 @@ impl Label {
         section.bounds = self.rect.bounds.into();
         section.screen_position = self.screen_position().into();
         section
+    }
+
+    pub fn varied_section(&self, sections: Vec<OwnedSectionText>) -> OwnedVariedSection {
+        OwnedVariedSection {
+            text: sections,
+            bounds: self.rect.bounds.into(),
+            screen_position: self.screen_position().into(),
+            ..OwnedVariedSection::default()
+        }
     }
 
     pub fn recalc(&mut self, gfx_window: &mut GfxWindow) {

@@ -1,14 +1,14 @@
 use crate::words;
 use crate::*;
 use cgmath::Vector2;
-use gfx_glyph::{FontId, Scale, SectionText, VariedSection};
+use gfx_glyph::{FontId, OwnedSectionText, OwnedVariedSection, Scale};
 use rand;
 use rand::seq::SliceRandom;
 use std::time::{Duration, Instant};
 
 const SAMPLE_WORDS: usize = 300; // num of words to sample - should be less than highest WPM
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum EnteredWord {
     Correct,
     Incorrect,
@@ -25,6 +25,8 @@ pub struct TypingTest {
     pub end_time: Option<Instant>,
     pub duration: Option<Duration>,
     pub ended: bool,
+    pub word_colors: Vec<ColorArray>,
+    skip_num: usize,
 }
 
 impl TypingTest {
@@ -106,6 +108,11 @@ impl TypingTest {
                         EnteredWord::Incorrect
                     };
                 self.words_entered.push(assessment);
+                self.word_colors[self.next_word] = if assessment == EnteredWord::Correct {
+                    CORRECT_WORD_COLOR
+                } else {
+                    INCORRECT_WORD_COLOR
+                };
                 self.entered_text.clear();
                 self.next_word += 1;
             }
@@ -151,54 +158,65 @@ impl TypingTest {
         )
     }
 
+    pub fn set_words(&mut self, words: Vec<String>) {
+        let num_words = words.len();
+        self.words = words;
+        self.word_colors = vec![TEXT_COLOR; num_words];
+    }
+
+    pub fn set_skip_num(&mut self, skip_num: usize) {
+        self.skip_num = skip_num;
+    }
+
     pub fn words_str(&self) -> String {
         self.words.join(" ")
     }
 
+    pub fn words_as_sections(&self, font_id: FontId, scale: f32) -> Vec<OwnedSectionText> {
+        let mut sections = vec![];
+        for (word_idx, word) in self.words.iter().enumerate().skip(self.skip_num) {
+            let color = self.word_colors[word_idx];
+            sections.push(OwnedSectionText {
+                text: word.to_owned(),
+                color,
+                font_id,
+                scale: Scale::uniform(scale),
+            });
+            sections.push(OwnedSectionText {
+                text: String::from(" "),
+                color: TEXT_COLOR,
+                font_id,
+                scale: Scale::uniform(scale),
+                ..OwnedSectionText::default()
+            });
+        }
+        sections
+    }
+
     pub fn words_as_varied_section(
         &self,
-        skip_num: usize,
         bounds: Vector2<f32>,
         position: Vector2<f32>,
         font_scale: f32,
         font_id: FontId,
-    ) -> VariedSection {
-        let mut sections = vec![];
-        for (word_idx, word) in self.words.iter().enumerate().skip(skip_num) {
-            let correct_or_not = self.words_entered.get(word_idx);
-            let color = match correct_or_not {
-                Some(EnteredWord::Correct) => CORRECT_WORD_COLOR,
-                Some(EnteredWord::Incorrect) => INCORRECT_WORD_COLOR,
-                _ => TEXT_COLOR,
-            };
-            sections.push(SectionText {
-                text: &word,
-                color,
-                font_id,
-                scale: Scale::uniform(font_scale),
-            });
-            sections.push(SectionText {
-                text: " ",
-                font_id,
-                scale: Scale::uniform(font_scale),
-                ..SectionText::default()
-            });
-        }
-        VariedSection {
+    ) -> OwnedVariedSection {
+        let sections = self.words_as_sections(font_id, font_scale);
+        OwnedVariedSection {
             text: sections,
             bounds: bounds.into(),
             screen_position: position.into(),
             z: 1.0,
-            ..VariedSection::default()
+            ..OwnedVariedSection::default()
         }
     }
 
     pub fn top200(&mut self) {
         let mut rng = &mut rand::thread_rng();
         let sample = words::top_200::words();
-        self.words = sample
+        let test_words = sample
             .choose_multiple(&mut rng, SAMPLE_WORDS)
             .cloned()
             .collect();
+        self.set_words(test_words);
     }
 }
