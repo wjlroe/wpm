@@ -25,7 +25,6 @@ pub struct TestScreen {
     typing_test: TypingTest,
     typing_state: TypingState,
     back_label: Label,
-    go_back: bool,
     input_cursor: Rect,
     reference_cursor: Rect,
     input_cursor_size: Label,
@@ -75,7 +74,6 @@ impl TestScreen {
         let mut test_screen = Self {
             need_font_recalc: true,
             back_label: gfx_window.back_label(),
-            go_back: false,
             input_label,
             input_cursor_size,
             reference_cursor_size: Label::new(
@@ -290,7 +288,7 @@ impl Screen for TestScreen {
         gfx_window: &mut GfxWindow,
         _config: &Config,
     ) -> Option<Box<dyn Screen>> {
-        if self.go_back {
+        if self.back_label.ui_state.pressed {
             Some(Box::new(screens::Menu::new(gfx_window)))
         } else if self.typing_test.ended {
             let typing_result = self.typing_test.result();
@@ -340,7 +338,7 @@ impl Screen for TestScreen {
 
     fn mouse_click(&mut self, position: Vector2<f32>) {
         if self.back_label.rect.contains_point(position) {
-            self.go_back = true;
+            self.back_label.ui_state.pressed = true;
         }
     }
 

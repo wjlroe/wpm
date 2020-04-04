@@ -14,8 +14,6 @@ pub struct ResultsScreen {
     typing_result: TypingResult,
     unsaved_result: bool,
     need_font_recalc: bool,
-    go_back: bool,
-    save_result: bool,
     wpm_label: Label,
     wpm_value: Label,
     correct_label: Label,
@@ -40,8 +38,6 @@ impl ResultsScreen {
             typing_result: typing_result.clone(),
             unsaved_result,
             need_font_recalc: true,
-            go_back: false,
-            save_result: false,
             wpm_label: Label::new(
                 HEADLINE_LABEL_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
@@ -267,10 +263,10 @@ impl Screen for ResultsScreen {
         gfx_window: &mut GfxWindow,
         config: &Config,
     ) -> Option<Box<dyn Screen>> {
-        if self.go_back {
+        if self.back_label.ui_state.pressed {
             let screen = screens::TestScreen::new(gfx_window, config);
             Some(Box::new(screen))
-        } else if self.save_result {
+        } else if self.save_label.ui_state.pressed {
             match storage::save_result_to_file(&self.typing_result) {
                 Err(error) => {
                     println!("Error saving results to file: {:?}", error);
@@ -285,9 +281,9 @@ impl Screen for ResultsScreen {
 
     fn mouse_click(&mut self, position: Vector2<f32>) {
         if self.back_label.rect.contains_point(position) {
-            self.go_back = true;
+            self.back_label.ui_state.pressed = true;
         } else if self.unsaved_result && self.save_label.rect.contains_point(position) {
-            self.save_result = true;
+            self.save_label.ui_state.pressed = true;
         }
     }
 

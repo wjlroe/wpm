@@ -65,7 +65,6 @@ impl TableRow {
 pub struct ResultsListScreen {
     need_font_recalc: bool,
     back_label: Label,
-    go_back: bool,
     list_title: Label,
     table_headers: [Label; 3],
     table_rows: Vec<TableRow>,
@@ -96,7 +95,6 @@ impl ResultsListScreen {
         }
         Self {
             need_font_recalc: true,
-            go_back: false,
             back_label: gfx_window.back_label(),
             list_title: Label::new(
                 TITLE_FONT_SIZE,
@@ -317,7 +315,7 @@ impl Screen for ResultsListScreen {
         gfx_window: &mut GfxWindow,
         _config: &Config,
     ) -> Option<Box<dyn Screen>> {
-        if self.go_back {
+        if self.back_label.ui_state.pressed {
             Some(Box::new(screens::Menu::new(gfx_window)))
         } else if let Some(goto_row) = self.selected_row() {
             if let Some(table_row) = self.table_rows.get(goto_row) {
@@ -374,7 +372,7 @@ impl Screen for ResultsListScreen {
     fn mouse_click(&mut self, position: Vector2<f32>) {
         // check if mouse is positioned over one of the results rows
         if self.back_label.rect.contains_point(position) {
-            self.go_back = true;
+            self.back_label.ui_state.pressed = true;
         }
 
         if self.table_rect.contains_point(position) {

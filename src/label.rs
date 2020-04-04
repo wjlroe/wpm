@@ -13,6 +13,7 @@ pub struct Label {
     pub rect: Rect,
     pub text: String,
     pub layout: Layout<BuiltInLineBreaker>,
+    pub ui_state: UIState,
 }
 
 impl Label {

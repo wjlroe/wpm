@@ -10,9 +10,7 @@ const MENU_FONT_SIZE: f32 = 48.0;
 pub struct Menu {
     need_font_recalc: bool,
     typing_test_label: Label,
-    start_typing_test: bool,
     results_list_label: Label,
-    show_results_list: bool,
 }
 
 impl Menu {
@@ -26,7 +24,6 @@ impl Menu {
                 String::from("Start typing test"),
                 gfx_window,
             ),
-            start_typing_test: false,
             results_list_label: Label::new(
                 MENU_FONT_SIZE,
                 gfx_window.fonts.roboto_font_id,
@@ -34,7 +31,6 @@ impl Menu {
                 String::from("Results"),
                 gfx_window,
             ),
-            show_results_list: false,
         }
     }
 
@@ -70,9 +66,9 @@ impl Screen for Menu {
         gfx_window: &mut GfxWindow,
         config: &Config,
     ) -> Option<Box<dyn Screen>> {
-        if self.start_typing_test {
+        if self.typing_test_label.ui_state.pressed {
             Some(Box::new(screens::TestScreen::new(gfx_window, config)))
-        } else if self.show_results_list {
+        } else if self.results_list_label.ui_state.pressed {
             Some(Box::new(screens::ResultsListScreen::new(gfx_window)))
         } else {
             None
@@ -89,9 +85,9 @@ impl Screen for Menu {
 
     fn mouse_click(&mut self, position: Vector2<f32>) {
         if self.typing_test_label.rect.contains_point(position) {
-            self.start_typing_test = true;
+            self.typing_test_label.ui_state.pressed = true;
         } else if self.results_list_label.rect.contains_point(position) {
-            self.show_results_list = true;
+            self.results_list_label.ui_state.pressed = true;
         }
     }
 
