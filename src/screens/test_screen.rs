@@ -439,7 +439,6 @@ impl Screen for TestScreen {
                 &gfx_window.quad_bundle.data.out_color,
             )?;
 
-        // FIXME: change render color based on whether word is correct or not!
         gfx_window.queue_label(&self.input_label);
 
         // Render clock countdown timer
