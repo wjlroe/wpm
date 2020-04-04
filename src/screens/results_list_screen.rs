@@ -37,10 +37,7 @@ struct TableRow {
     cells: [Label; 3],
     row_rect: Rect,
     typing_result: TypingResult,
-
-    // TODO: extract these to some UIState thingy for use elsewhere
-    highlighted: bool,
-    selected: bool,
+    ui_state: UIState,
 }
 
 impl TableRow {
@@ -60,8 +57,7 @@ impl TableRow {
                 table_cell_label(notes, gfx_window),
             ],
             row_rect: Rect::default(),
-            highlighted: false,
-            selected: false,
+            ui_state: UIState::default(),
         }
     }
 }
@@ -124,18 +120,21 @@ impl ResultsListScreen {
     fn set_highlight_row(&mut self, hl_idx: Option<usize>) {
         for (idx, row) in &mut self.table_rows.iter_mut().enumerate() {
             if Some(idx) == hl_idx {
-                row.highlighted = true;
+                row.ui_state.highlighted = true;
             } else {
-                row.highlighted = false;
+                row.ui_state.highlighted = false;
             }
         }
     }
 
     fn highlighted_row(&self) -> Option<usize> {
-        self.table_rows
-            .iter()
-            .enumerate()
-            .find_map(|(idx, row)| if row.highlighted { Some(idx) } else { None })
+        self.table_rows.iter().enumerate().find_map(|(idx, row)| {
+            if row.ui_state.highlighted {
+                Some(idx)
+            } else {
+                None
+            }
+        })
     }
 
     fn move_highlight(&mut self, amount: i32) {
@@ -164,18 +163,21 @@ impl ResultsListScreen {
     }
 
     fn selected_row(&self) -> Option<usize> {
-        self.table_rows
-            .iter()
-            .enumerate()
-            .find_map(|(idx, row)| if row.selected { Some(idx) } else { None })
+        self.table_rows.iter().enumerate().find_map(|(idx, row)| {
+            if row.ui_state.selected {
+                Some(idx)
+            } else {
+                None
+            }
+        })
     }
 
     fn set_selected_row(&mut self, sel_idx: Option<usize>) {
         for (idx, row) in &mut self.table_rows.iter_mut().enumerate() {
             if Some(idx) == sel_idx {
-                row.selected = true;
+                row.ui_state.selected = true;
             } else {
-                row.selected = false;
+                row.ui_state.selected = false;
             }
         }
     }

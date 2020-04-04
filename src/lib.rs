@@ -16,6 +16,7 @@ pub mod storage;
 mod typing_result;
 mod typing_state;
 mod typing_test;
+mod ui_state;
 mod words;
 
 pub use animation::Animation;
@@ -34,5 +35,6 @@ pub use screens::*;
 pub use typing_result::*;
 pub use typing_state::TypingState;
 pub use typing_test::{EnteredWord, TypingTest};
+pub use ui_state::UIState;
 
 pub const UI_TEXT_BUTTON_SIZE: f32 = 68.0;
