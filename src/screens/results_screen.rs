@@ -277,7 +277,7 @@ impl Screen for ResultsScreen {
                 }
                 _ => {}
             };
-            Some(Box::new(ResultsListScreen::new(gfx_window)))
+            Some(Box::new(screens::ResultsListScreen::new(gfx_window)))
         } else {
             None
         }
