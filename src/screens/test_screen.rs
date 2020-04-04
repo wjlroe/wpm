@@ -1,4 +1,5 @@
 use crate::layout::ElementLayout;
+use crate::screens;
 use crate::*;
 use cgmath::*;
 use gfx_glyph::{
@@ -7,7 +8,6 @@ use gfx_glyph::{
 use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use std::error::Error;
 
-const LISTING_BUTTON_FONT_SIZE: f32 = 68.0;
 const INPUT_FONT_SIZE: f32 = 32.0;
 const REFERENCE_FONT_SIZE: f32 = 32.0;
 const TIMER_FONT_SIZE: f32 = 48.0;
@@ -24,8 +24,8 @@ pub struct TestScreen {
     input_label: Label,
     typing_test: TypingTest,
     typing_state: TypingState,
-    show_listing_label: Label,
-    goto_listing: bool,
+    back_label: Label,
+    go_back: bool,
     input_cursor: Rect,
     reference_cursor: Rect,
     input_cursor_size: Label,
@@ -34,19 +34,6 @@ pub struct TestScreen {
 
 impl TestScreen {
     pub fn new(gfx_window: &mut GfxWindow, config: &Config) -> Self {
-        let mut show_listing_label = Label::new(
-            LISTING_BUTTON_FONT_SIZE,
-            gfx_window.fonts.iosevka_font_id,
-            TEXT_COLOR,
-            String::from("≡"),
-            gfx_window,
-        )
-        .with_layout(
-            Layout::default_single_line()
-                .v_align(VerticalAlign::Center)
-                .h_align(HorizontalAlign::Center),
-        );
-        show_listing_label.rect.bounds.x *= 1.5;
         let input_label = Label::new(
             INPUT_FONT_SIZE,
             gfx_window.fonts.roboto_font_id,
@@ -87,7 +74,8 @@ impl TestScreen {
         timer_label.rect.bounds.x *= 1.08;
         let mut test_screen = Self {
             need_font_recalc: true,
-            show_listing_label,
+            back_label: gfx_window.back_label(),
+            go_back: false,
             input_label,
             input_cursor_size,
             reference_cursor_size: Label::new(
@@ -150,8 +138,8 @@ impl TestScreen {
     fn update_font_metrics(&mut self, gfx_window: &mut GfxWindow) {
         let left_and_top_padding = 15.0;
 
-        self.show_listing_label.rect.position.x = left_and_top_padding;
-        self.show_listing_label.rect.position.y = left_and_top_padding;
+        self.back_label.rect.position.x = left_and_top_padding;
+        self.back_label.rect.position.y = left_and_top_padding;
 
         let mut typing_character_dim = vec2(0.0, 0.0);
 
@@ -302,11 +290,11 @@ impl Screen for TestScreen {
         gfx_window: &mut GfxWindow,
         _config: &Config,
     ) -> Option<Box<dyn Screen>> {
-        if self.goto_listing {
-            Some(Box::new(ResultsListScreen::new(gfx_window)))
+        if self.go_back {
+            Some(Box::new(screens::Menu::new(gfx_window)))
         } else if self.typing_test.ended {
             let typing_result = self.typing_test.result();
-            Some(Box::new(ResultsScreen::new(
+            Some(Box::new(screens::ResultsScreen::new(
                 typing_result,
                 true,
                 gfx_window,
@@ -351,8 +339,8 @@ impl Screen for TestScreen {
     }
 
     fn mouse_click(&mut self, position: Vector2<f32>) {
-        if self.show_listing_label.rect.contains_point(position) {
-            self.goto_listing = true;
+        if self.back_label.rect.contains_point(position) {
+            self.go_back = true;
         }
     }
 
@@ -446,7 +434,7 @@ impl Screen for TestScreen {
             gfx_window.queue_label(&self.timer_label);
         }
 
-        gfx_window.queue_label(&self.show_listing_label);
+        gfx_window.queue_label(&self.back_label);
 
         gfx_window
             .glyph_brush

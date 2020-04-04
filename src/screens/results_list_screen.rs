@@ -313,9 +313,10 @@ impl Screen for ResultsListScreen {
     fn maybe_change_to_screen(
         &self,
         gfx_window: &mut GfxWindow,
-        config: &Config,
+        _config: &Config,
     ) -> Option<Box<dyn Screen>> {
         if self.go_back {
+            Some(Box::new(screens::Menu::new(gfx_window)))
         } else if let Some(goto_row) = self.selected_row() {
             if let Some(table_row) = self.table_rows.get(goto_row) {
                 Some(Box::new(screens::ResultsScreen::new(

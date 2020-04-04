@@ -23,7 +23,7 @@ const MAX_FRAME_TIME: Duration = Duration::from_millis(33);
 impl<'a> App<'a> {
     pub fn new(event_loop: &EventsLoop, config: Config) -> Self {
         let mut gfx_window = GfxWindow::default_win_size(event_loop);
-        let screen = screens::TestScreen::new(&mut gfx_window, &config);
+        let screen = screens::Menu::new(&mut gfx_window);
         let bg_switch_label = Label::new(
             32.0, // FIXME: what font size?
             gfx_window.fonts.iosevka_font_id,
