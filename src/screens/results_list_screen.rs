@@ -37,6 +37,10 @@ struct TableRow {
     cells: [Label; 3],
     row_rect: Rect,
     typing_result: TypingResult,
+
+    // TODO: extract these to some UIState thingy for use elsewhere
+    highlighted: bool,
+    selected: bool,
 }
 
 impl TableRow {
@@ -56,6 +60,8 @@ impl TableRow {
                 table_cell_label(notes, gfx_window),
             ],
             row_rect: Rect::default(),
+            highlighted: false,
+            selected: false,
         }
     }
 }
@@ -70,8 +76,6 @@ pub struct ResultsListScreen {
     table_rect: Rect,
     table_header_rect: Rect,
     table_rows_rect: Rect,
-    highlighted_row: Option<usize>,
-    goto_row: Option<usize>,
 }
 
 impl ResultsListScreen {
@@ -114,9 +118,24 @@ impl ResultsListScreen {
             table_rect: Rect::default(),
             table_header_rect: Rect::default(),
             table_rows_rect: Rect::default(),
-            highlighted_row: None,
-            goto_row: None,
         }
+    }
+
+    fn set_highlight_row(&mut self, hl_idx: Option<usize>) {
+        for (idx, row) in &mut self.table_rows.iter_mut().enumerate() {
+            if Some(idx) == hl_idx {
+                row.highlighted = true;
+            } else {
+                row.highlighted = false;
+            }
+        }
+    }
+
+    fn highlighted_row(&self) -> Option<usize> {
+        self.table_rows
+            .iter()
+            .enumerate()
+            .find_map(|(idx, row)| if row.highlighted { Some(idx) } else { None })
     }
 
     fn move_highlight(&mut self, amount: i32) {
@@ -125,27 +144,44 @@ impl ResultsListScreen {
             return;
         }
         let last_row = num_rows - 1;
-        if self.highlighted_row.is_none() {
+        let mut highlighted_row = self.highlighted_row();
+        if highlighted_row.is_none() {
             if amount > 0 {
-                self.highlighted_row = Some(0);
+                highlighted_row = Some(0);
             } else {
-                self.highlighted_row = Some(last_row as usize);
+                highlighted_row = Some(last_row as usize);
             }
         } else {
-            let mut new_row = self.highlighted_row.unwrap() as i32 + amount;
+            let mut new_row = highlighted_row.unwrap() as i32 + amount;
             new_row %= num_rows;
             if new_row < 0 {
                 new_row += num_rows;
             }
-            self.highlighted_row = Some(new_row as usize);
+            highlighted_row = Some(new_row as usize);
         }
-        assert!(self.highlighted_row.unwrap() < self.table_rows.len());
+        assert!(highlighted_row.unwrap() < self.table_rows.len());
+        self.set_highlight_row(highlighted_row);
     }
 
-    fn select_row(&mut self) {
-        if let Some(row) = self.highlighted_row {
-            self.goto_row = Some(row);
+    fn selected_row(&self) -> Option<usize> {
+        self.table_rows
+            .iter()
+            .enumerate()
+            .find_map(|(idx, row)| if row.selected { Some(idx) } else { None })
+    }
+
+    fn set_selected_row(&mut self, sel_idx: Option<usize>) {
+        for (idx, row) in &mut self.table_rows.iter_mut().enumerate() {
+            if Some(idx) == sel_idx {
+                row.selected = true;
+            } else {
+                row.selected = false;
+            }
         }
+    }
+
+    fn select_highlighted_row(&mut self) {
+        self.set_selected_row(self.highlighted_row());
     }
 
     fn col_width(&self, col: usize) -> f32 {
@@ -280,8 +316,7 @@ impl Screen for ResultsListScreen {
         config: &Config,
     ) -> Option<Box<dyn Screen>> {
         if self.go_back {
-            Some(Box::new(screens::TestScreen::new(gfx_window, config)))
-        } else if let Some(goto_row) = self.goto_row {
+        } else if let Some(goto_row) = self.selected_row() {
             if let Some(table_row) = self.table_rows.get(goto_row) {
                 Some(Box::new(screens::ResultsScreen::new(
                     table_row.typing_result.clone(),
@@ -318,7 +353,7 @@ impl Screen for ResultsListScreen {
                                 match virtual_keycode {
                                     VirtualKeyCode::Down => self.move_highlight(1),
                                     VirtualKeyCode::Up => self.move_highlight(-1),
-                                    VirtualKeyCode::Return => self.select_row(),
+                                    VirtualKeyCode::Return => self.select_highlighted_row(),
                                     _ => {}
                                 }
                                 update_and_render = true;
@@ -342,11 +377,14 @@ impl Screen for ResultsListScreen {
         if self.table_rect.contains_point(position) {
             // find the header
             // find the row
+            let mut selected_row = None;
             for (i, table_row) in self.table_rows.iter().enumerate() {
                 if table_row.row_rect.contains_point(position) {
-                    self.goto_row = Some(i)
+                    selected_row = Some(i);
                 }
             }
+            self.set_highlight_row(selected_row);
+            self.select_highlighted_row();
         }
     }
 
@@ -388,7 +426,7 @@ impl Screen for ResultsListScreen {
             1.0 - 0.1,
             TABLE_OUTLINE_WIDTH,
         );
-        if let Some(highlighted_row_idx) = self.highlighted_row {
+        if let Some(highlighted_row_idx) = self.highlighted_row() {
             if let Some(table_row) = self.table_rows.get(highlighted_row_idx) {
                 let bg = if current_bg_color() == BackgroundColor::Dark {
                     LIGHT_BG_COLOR
