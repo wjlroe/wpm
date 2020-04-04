@@ -30,18 +30,7 @@ impl fmt::Display for StorageError {
 }
 
 impl error::Error for StorageError {
-    fn description(&self) -> &str {
-        match *self {
-            StorageError::MissingCorrectWords(ref err) => err.description(),
-            StorageError::MissingIncorrectWords(ref err) => err.description(),
-            StorageError::MissingBackspaces(ref err) => err.description(),
-            StorageError::MissingWpm(ref err) => err.description(),
-            StorageError::MissingTime(ref err) => err.description(),
-            StorageError::MissingNotesLen(ref err) => err.description(),
-        }
-    }
-
-    fn cause(&self) -> Option<&dyn error::Error> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match *self {
             StorageError::MissingCorrectWords(ref err) => Some(err),
             StorageError::MissingIncorrectWords(ref err) => Some(err),
