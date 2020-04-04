@@ -113,6 +113,9 @@ impl TypingTest {
                 } else {
                     INCORRECT_WORD_COLOR
                 };
+                if let Some(word_color) = self.word_colors.get_mut(self.next_word + 1) {
+                    *word_color = NEXT_WORD_COLOR;
+                }
                 self.entered_text.clear();
                 self.next_word += 1;
             }

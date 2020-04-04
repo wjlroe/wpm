@@ -49,6 +49,7 @@ pub const GREEN: ColorArray = color_array_from_rgb!(133, 153, 0);
 pub const TEXT_COLOR: ColorArray = BASE01;
 pub const CORRECT_WORD_COLOR: ColorArray = GREEN;
 pub const INCORRECT_WORD_COLOR: ColorArray = RED;
+pub const NEXT_WORD_COLOR: ColorArray = BLUE;
 pub const INPUT_OUTLINE_COLOR: ColorArray = MAGENTA;
 pub const TIMER_OUTLINE_COLOR: ColorArray = CYAN;
 pub const TIMER_COLOR: ColorArray = VIOLET;
