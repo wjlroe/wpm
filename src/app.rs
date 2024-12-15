@@ -2,15 +2,19 @@ use crate::config::Config;
 use crate::screens;
 use crate::*;
 use cgmath::*;
-use glutin::dpi::*;
-use glutin::*;
 use std::error::Error;
 use std::thread;
 use std::time::{Duration, Instant};
+use winit::{
+    event::*,
+    event_loop::EventLoop,
+    keyboard::{KeyCode, PhysicalKey},
+    window::WindowBuilder,
+};
 
 pub struct App<'a> {
     running: bool,
-    gfx_window: GfxWindow<'a>,
+    window: GfxWindow<'a>,
     mouse_position: LogicalPosition,
     render_screen: bool,
     current_screen: Box<dyn Screen>,
@@ -22,7 +26,8 @@ const MAX_FRAME_TIME: Duration = Duration::from_millis(33);
 
 impl<'a> App<'a> {
     pub fn new(event_loop: &EventsLoop, config: Config) -> Self {
-        let mut gfx_window = GfxWindow::default_win_size(event_loop);
+        // let mut gfx_window = GfxWindow::default_win_size(event_loop);
+        let window = WindowBuilder::new().build(&event_loop).unwrap();
         let screen = screens::Menu::new(&mut gfx_window);
         let bg_switch_label = Label::new(
             32.0, // FIXME: what font size?
@@ -33,7 +38,7 @@ impl<'a> App<'a> {
         );
         App {
             running: true,
-            gfx_window,
+            window,
             mouse_position: LogicalPosition::new(0.0, 0.0),
             render_screen: true,
             current_screen: Box::new(screen),
@@ -70,34 +75,35 @@ impl<'a> App<'a> {
         let mut update_and_render = false;
         match event {
             Event::WindowEvent {
-                event: win_event, ..
-            } => match win_event {
+                ref event,
+                window_id,
+            } => match event {
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => self.running = false,
-                WindowEvent::Resized(new_logical_size) => {
-                    self.gfx_window.logical_size = *new_logical_size;
-                    self.window_resized();
-                    update_and_render = true;
-                }
-                WindowEvent::HiDpiFactorChanged(new_dpi) => {
-                    self.gfx_window.dpi = *new_dpi;
-                    self.window_resized();
-                    update_and_render = true;
-                }
-                WindowEvent::Moved(_) => {
-                    self.gfx_window.update_monitor();
-                    update_and_render = true;
-                }
-                WindowEvent::CursorMoved { position, .. } => {
-                    self.mouse_position = *position;
-                }
-                WindowEvent::MouseInput {
-                    state: ElementState::Pressed,
-                    ..
-                } => {
-                    let physical_mouse = self.mouse_position.to_physical(self.gfx_window.dpi);
-                    self.mouse_click(vec2(physical_mouse.x as f32, physical_mouse.y as f32));
-                    update_and_render = true;
-                }
+                // WindowEvent::Resized(new_logical_size) => {
+                //     self.gfx_window.logical_size = *new_logical_size;
+                //     self.window_resized();
+                //     update_and_render = true;
+                // }
+                // WindowEvent::HiDpiFactorChanged(new_dpi) => {
+                //     self.gfx_window.dpi = *new_dpi;
+                //     self.window_resized();
+                //     update_and_render = true;
+                // }
+                // WindowEvent::Moved(_) => {
+                //     self.gfx_window.update_monitor();
+                //     update_and_render = true;
+                // }
+                // WindowEvent::CursorMoved { position, .. } => {
+                //     self.mouse_position = *position;
+                // }
+                // WindowEvent::MouseInput {
+                //     state: ElementState::Pressed,
+                //     ..
+                // } => {
+                //     let physical_mouse = self.mouse_position.to_physical(self.gfx_window.dpi);
+                //     self.mouse_click(vec2(physical_mouse.x as f32, physical_mouse.y as f32));
+                //     update_and_render = true;
+                // }
                 WindowEvent::KeyboardInput {
                     input: keyboard_input,
                     ..
@@ -170,7 +176,7 @@ impl<'a> App<'a> {
             thread::sleep(MAX_FRAME_TIME);
         });
 
-        event_loop.run_forever(move |event| {
+        event_loop.run_forever(move |event, control_flow| {
             let mut update_and_render = self.process_event(&event);
             let elapsed = last_frame_time.elapsed();
             if elapsed >= MAX_FRAME_TIME {
