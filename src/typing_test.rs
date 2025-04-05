@@ -1,10 +1,10 @@
 use crate::words;
 use crate::*;
 use cgmath::Vector2;
-use gfx_glyph::{FontId, OwnedSectionText, OwnedVariedSection, Scale};
 use rand;
 use rand::seq::SliceRandom;
 use std::time::{Duration, Instant};
+use wgpu_glyph::{FontId, OwnedSectionText, OwnedVariedSection, Scale};
 
 const SAMPLE_WORDS: usize = 300; // num of words to sample - should be less than highest WPM
 

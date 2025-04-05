@@ -2,8 +2,8 @@ use crate::layout::ElementLayout;
 use crate::screens;
 use crate::*;
 use cgmath::*;
-use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use std::error::Error;
+use winit::event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 
 const TITLE_FONT_SIZE: f32 = 48.0;
 const HEADER_FONT_SIZE: f32 = 32.0;
@@ -332,7 +332,7 @@ impl Screen for ResultsListScreen {
         }
     }
 
-    fn process_event(&mut self, event: &Event, _gfx_window: &mut GfxWindow) -> bool {
+    fn process_event(&mut self, event: &Event<()>, _gfx_window: &mut GfxWindow) -> bool {
         let mut update_and_render = false;
         if let Event::WindowEvent {
             event: win_event, ..

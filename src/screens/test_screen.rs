@@ -2,11 +2,11 @@ use crate::layout::ElementLayout;
 use crate::screens;
 use crate::*;
 use cgmath::*;
-use gfx_glyph::{
+use std::error::Error;
+use wgpu_glyph::{
     GlyphCruncher, HorizontalAlign, Layout, PositionedGlyph, Scale, Section, VerticalAlign,
 };
-use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
-use std::error::Error;
+use winit::event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 
 const INPUT_FONT_SIZE: f32 = 32.0;
 const REFERENCE_FONT_SIZE: f32 = 32.0;
@@ -302,7 +302,7 @@ impl Screen for TestScreen {
         }
     }
 
-    fn process_event(&mut self, event: &Event, gfx_window: &mut GfxWindow) -> bool {
+    fn process_event(&mut self, event: &Event<()>, gfx_window: &mut GfxWindow) -> bool {
         let mut update_and_render = false;
         if let Event::WindowEvent {
             event: win_event, ..

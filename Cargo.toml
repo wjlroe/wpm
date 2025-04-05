@@ -4,16 +4,13 @@ description = "Typing test tool"
 version = "0.1.0"
 authors = ["William Roe <git@wjlr.org.uk>"]
 edition = "2018"
+resolver = "2"
 license = "MIT"
 
 [dependencies]
-gfx = "0.18"
-gfx_device_gl = "0.16"
-gfx_gl = "0.6"
-gfx_window_glutin = "0.31"
-glutin = "0.21"
+wgpu = "24.0"
+winit = "0.30.9"
 cgmath = "0.17.0"
-gfx_glyph = "0.16"
 rmp = "0.8"
 dirs = "1"
 num-traits = "0.2"
@@ -21,6 +18,7 @@ num-derive = "0.2"
 chrono = "0.4"
 rand = "0.6"
 clap = "2.33"
+glyphon = "0.8.0"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.5", features = [

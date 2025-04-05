@@ -2,16 +2,17 @@ use crate::config::Config;
 use crate::screens;
 use crate::*;
 use cgmath::*;
-use glutin::dpi::*;
-use glutin::*;
 use std::error::Error;
 use std::thread;
 use std::time::{Duration, Instant};
+use winit::dpi::*;
+use winit::event::*;
+use winit::event_loop::{ControlFlow, EventLoop, EventLoopProxy};
 
 pub struct App<'a> {
     running: bool,
     gfx_window: GfxWindow<'a>,
-    mouse_position: LogicalPosition,
+    mouse_position: LogicalPosition<f64>,
     render_screen: bool,
     current_screen: Box<dyn Screen>,
     bg_switch_label: Label,
@@ -21,7 +22,7 @@ pub struct App<'a> {
 const MAX_FRAME_TIME: Duration = Duration::from_millis(33);
 
 impl<'a> App<'a> {
-    pub fn new(event_loop: &EventsLoop, config: Config) -> Self {
+    pub fn new(event_loop: &EventLoop<()>, config: Config) -> Self {
         let mut gfx_window = GfxWindow::default_win_size(event_loop);
         let screen = screens::Menu::new(&mut gfx_window);
         let bg_switch_label = Label::new(
@@ -66,7 +67,7 @@ impl<'a> App<'a> {
         }
     }
 
-    fn process_event(&mut self, event: &Event) -> bool {
+    fn process_event(&mut self, event: &Event<()>) -> bool {
         let mut update_and_render = false;
         match event {
             Event::WindowEvent {
@@ -78,8 +79,8 @@ impl<'a> App<'a> {
                     self.window_resized();
                     update_and_render = true;
                 }
-                WindowEvent::HiDpiFactorChanged(new_dpi) => {
-                    self.gfx_window.dpi = *new_dpi;
+                WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                    self.gfx_window.dpi = *scale_factor;
                     self.window_resized();
                     update_and_render = true;
                 }
@@ -160,17 +161,17 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    pub fn run(&mut self, event_loop: &mut EventsLoop) -> Result<(), Box<dyn Error>> {
+    pub fn run(&mut self, event_loop: &mut EventLoop<()>) -> Result<(), Box<dyn Error>> {
         self.window_resized(); // Ensure calculations are completed, without relying on a resize event
         let mut last_frame_time = Instant::now();
         let event_proxy = event_loop.create_proxy();
 
         thread::spawn(move || loop {
-            let _ = event_proxy.wakeup();
+            let _ = event_proxy.send_event(());
             thread::sleep(MAX_FRAME_TIME);
         });
 
-        event_loop.run_forever(move |event| {
+        event_loop.run(move |event, _, control_flow| {
             let mut update_and_render = self.process_event(&event);
             let elapsed = last_frame_time.elapsed();
             if elapsed >= MAX_FRAME_TIME {
@@ -186,9 +187,9 @@ impl<'a> App<'a> {
             }
 
             if self.running {
-                ControlFlow::Continue
+                *control_flow = ControlFlow::Poll;
             } else {
-                ControlFlow::Break
+                *control_flow = ControlFlow::Exit;
             }
         });
 
