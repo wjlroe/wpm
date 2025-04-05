@@ -1,8 +1,7 @@
 name: Linux build and tests
 
 on:
-  pull_request:
-    branches: [ master ]
+  push:
     paths:
       - src/
       - tests/
