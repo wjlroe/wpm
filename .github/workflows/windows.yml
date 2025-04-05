@@ -1,10 +1,13 @@
 name: Windows build and tests
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
+    paths:
+      - src/
+      - tests/
+      - Cargo.lock
+      - Cargo.toml
 
 env:
   CARGO_TERM_COLOR: always
