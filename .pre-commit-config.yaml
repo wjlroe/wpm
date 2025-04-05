@@ -1,6 +1,6 @@
 exclude: '^(\.vscode|\.idea|\.vs)/'
 repos:
--   repo: git://github.com/pre-commit/pre-commit-hooks
+-   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:
     -   id: trailing-whitespace
