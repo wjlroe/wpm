@@ -1,6 +1,6 @@
 use crate::*;
 use cgmath::*;
-use gfx_glyph::{
+use wgpu_glyph::{
     BuiltInLineBreaker, FontId, GlyphCruncher, HorizontalAlign, Layout, OwnedSectionText,
     OwnedVariedSection, Scale, Section, VerticalAlign,
 };

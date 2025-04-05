@@ -1,4 +1,4 @@
-use glutin::ModifiersState;
+use winit::event::ModifiersState;
 
 pub const NO_MODS: ModifiersState = ModifiersState {
     ctrl: false,

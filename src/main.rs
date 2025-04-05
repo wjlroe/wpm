@@ -1,15 +1,15 @@
 #![windows_subsystem = "windows"]
 
 use clap;
-use glutin::EventsLoop;
+use winit::event_loop::EventLoop;
 use std::error::Error;
 use wpm::{config, storage, App};
 
 fn run_gui() -> Result<(), Box<dyn Error>> {
-    let mut event_loop = EventsLoop::new();
+    let event_loop = EventLoop::new();
     let config = config::Config::new();
     let mut app = App::new(&event_loop, config);
-    app.run(&mut event_loop)?;
+    app.run(event_loop)?;
 
     Ok(())
 }

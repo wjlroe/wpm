@@ -2,7 +2,7 @@ use crate::layout::ElementLayout;
 use crate::screens;
 use crate::*;
 use cgmath::*;
-use glutin::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
+use winit::event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use std::error::Error;
 
 const MENU_FONT_SIZE: f32 = 48.0;
@@ -75,7 +75,7 @@ impl Screen for Menu {
         }
     }
 
-    fn process_event(&mut self, _event: &Event, _gfx_window: &mut GfxWindow) -> bool {
+    fn process_event(&mut self, _event: &Event<()>, _gfx_window: &mut GfxWindow) -> bool {
         let mut update_and_render = false;
         // if let Event::WindowEvent {
 
