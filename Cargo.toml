@@ -4,11 +4,12 @@ description = "Typing test tool"
 version = "0.1.0"
 authors = ["William Roe <git@wjlr.org.uk>"]
 edition = "2018"
+resolver = "2"
 license = "MIT"
 
 [dependencies]
-wgpu = "0.10"
-winit = "0.25"
+wgpu = "24.0"
+winit = "0.30.9"
 cgmath = "0.17.0"
 rmp = "0.8"
 dirs = "1"
@@ -17,6 +18,7 @@ num-derive = "0.2"
 chrono = "0.4"
 rand = "0.6"
 clap = "2.33"
+wgpu_glyph = "0.23.0"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.5", features = [
