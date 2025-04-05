@@ -2,11 +2,11 @@ use crate::layout::ElementLayout;
 use crate::screens;
 use crate::*;
 use cgmath::*;
+use std::error::Error;
 use wgpu_glyph::{
     GlyphCruncher, HorizontalAlign, Layout, PositionedGlyph, Scale, Section, VerticalAlign,
 };
 use winit::event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
-use std::error::Error;
 
 const INPUT_FONT_SIZE: f32 = 32.0;
 const REFERENCE_FONT_SIZE: f32 = 32.0;

@@ -1,11 +1,11 @@
 use crate::*;
 use cgmath::*;
+use std::error::Error;
 use wgpu::util::DeviceExt;
 use wgpu::*;
 use winit::dpi::*;
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
-use std::error::Error;
 
 pub struct GfxWindow<'a> {
     pub logical_size: LogicalSize<f64>,
@@ -41,11 +41,12 @@ impl<'a> GfxWindow<'a> {
 
         let instance = Instance::new(Backends::PRIMARY);
         let surface = unsafe { instance.create_surface(&window) };
-        let adapter = futures::executor::block_on(instance.request_adapter(&RequestAdapterOptions {
-            power_preference: PowerPreference::HighPerformance,
-            compatible_surface: Some(&surface),
-        }))
-        .expect("Failed to find an appropriate adapter");
+        let adapter =
+            futures::executor::block_on(instance.request_adapter(&RequestAdapterOptions {
+                power_preference: PowerPreference::HighPerformance,
+                compatible_surface: Some(&surface),
+            }))
+            .expect("Failed to find an appropriate adapter");
 
         let (device, queue) = futures::executor::block_on(adapter.request_device(
             &DeviceDescriptor {
@@ -68,12 +69,11 @@ impl<'a> GfxWindow<'a> {
 
         let shader = device.create_shader_module(&include_wgsl!("shader.wgsl"));
 
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: None,
-                bind_group_layouts: &[],
-                push_constant_ranges: &[],
-            });
+        let render_pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
+            label: None,
+            bind_group_layouts: &[],
+            push_constant_ranges: &[],
+        });
 
         let render_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             label: None,
@@ -153,7 +153,9 @@ impl<'a> GfxWindow<'a> {
             .get_current_frame()
             .expect("Failed to acquire next swap chain texture")
             .output;
-        let mut encoder = self.device.create_command_encoder(&CommandEncoderDescriptor { label: None });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&CommandEncoderDescriptor { label: None });
 
         {
             let mut render_pass = encoder.begin_render_pass(&RenderPassDescriptor {

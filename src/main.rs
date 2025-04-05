@@ -1,8 +1,8 @@
 #![windows_subsystem = "windows"]
 
 use clap;
-use winit::event_loop::EventLoop;
 use std::error::Error;
+use winit::event_loop::EventLoop;
 use wpm::{config, storage, App};
 
 fn run_gui() -> Result<(), Box<dyn Error>> {

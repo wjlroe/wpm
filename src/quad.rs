@@ -54,19 +54,15 @@ impl QuadPipeline {
             vertex: VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[
-                    VertexBufferLayout {
-                        array_stride: std::mem::size_of::<[f32; 2]>() as BufferAddress,
-                        step_mode: VertexStepMode::Vertex,
-                        attributes: &[
-                            VertexAttribute {
-                                format: VertexFormat::Float32x2,
-                                offset: 0,
-                                shader_location: 0,
-                            },
-                        ],
-                    },
-                ],
+                buffers: &[VertexBufferLayout {
+                    array_stride: std::mem::size_of::<[f32; 2]>() as BufferAddress,
+                    step_mode: VertexStepMode::Vertex,
+                    attributes: &[VertexAttribute {
+                        format: VertexFormat::Float32x2,
+                        offset: 0,
+                        shader_location: 0,
+                    }],
+                }],
             },
             fragment: Some(FragmentState {
                 module: &shader,
@@ -95,12 +91,7 @@ impl QuadPipeline {
             multiview: None,
         });
 
-        let vertex_data = [
-            [-1.0, 1.0],
-            [-1.0, -1.0],
-            [1.0, -1.0],
-            [1.0, 1.0],
-        ];
+        let vertex_data = [[-1.0, 1.0], [-1.0, -1.0], [1.0, -1.0], [1.0, 1.0]];
         let index_data: [u16; 6] = [0, 1, 2, 2, 3, 0];
 
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
