@@ -19,5 +19,6 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: run pre-commit
         run: pre-commit run --all-files
