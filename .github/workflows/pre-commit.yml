@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
       - name: install pre-commit
         run:  curl https://pre-commit.com/install-local.py | python -
       - name: run pre-commit
